@@ -139,7 +139,7 @@ public class EventListener extends ListenerAdapter {
         }
         else if(event.getSubcommandName().equals("chantonav")){
             channelID =event.getOption("channel").getAsChannel().getId();
-            String channelName = event.getOption("channel").getAsChannel().getId();
+            String channelName = event.getOption("channel").getAsChannel().getName();
             channelURL = "https://discord.com/channels/"+guildID+"/"+channelID;
 
             navChn.sendMessageEmbeds(new EmbedBuilder()

@@ -25,6 +25,10 @@ public class SlashCommands {
         channelCreation();
     }
     public void channelCreation(){
+        //TODO category deletion
+        //TODO bulk voice channel creation
+
+
         CommandData bulk = Commands.slash("bulk","Prerequisite for bulk channel creation " +
                         "if the number is >1")
                 .addOption(OptionType.INTEGER, "amount", "Amount of channels " +
