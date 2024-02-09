@@ -1,28 +1,131 @@
 package ListenersAndCommands;
 
+import net.dv8tion.jda.api.AccountType;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 
 public class EventListener extends ListenerAdapter {
     private boolean bulkHasBeenSet= false;
     private int bulkChannelAmount = 1;
+    private boolean threadNumberDefined = false;
+    private int bulkThreadAmount = 1;
+    private byte count =0;
+    private SlashCommands bulk;
+
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        if(count == 0){
+            count++;
+            bulk =new SlashCommands(event.getJDA());
+        }
+        if(event.getUser().isBot()) return;
         channelNavigator(event);
         bulkChannel(event);
+        bulkThread(event);
     }
+    public void bulkThread(SlashCommandInteractionEvent event){//this and bulkchannel could be merged with a generic method
 
+        if(!event.getName().equals("numofthreads") && !event.getName().equals("bulkthread")) return;
+        event.deferReply().queue();
+        if(event.getName().equals("numofthreads")){
+            threadNumberDefined = true;
+            int bulkAmount = event.getOption("amount").getAsInt();
+            bulk.setAmountOfThreads(bulkAmount);
+
+            if(bulkAmount > 15){
+                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount was too much!**")
+                        .setDescription("/bulkhead is now available with 15 channel options.")
+                        .setColor(Color.orange).build()).queue();
+                bulk.setAmountOfThreads(15);
+            }else{
+                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
+                        .setDescription("/bultkhread is now available")
+                        .setColor(Color.green).build()).queue();
+            }
+            bulkThreadAmount = bulk.getAmountOfThreads();
+            bulk.bulkThreadCreator(bulkThreadAmount);
+            event.getJDA().upsertCommand(bulk.bulkChannelCreation).complete();
+        }
+        if(!threadNumberDefined){
+            event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
+                    .setDescription("You have to set the amount of threads you want to create with /numofthreads" +
+                            " first!")
+                    .setColor(Color.red).build()).queue();
+        }
+
+        if(event.getName().equals("bulkthread")) {
+            Guild guild = event.getGuild();
+            boolean threadExists = true;
+            String channelForThreadsId = event.getOption("threadchannel").getAsChannel().getId();
+
+            //TODO standardize checks with methods
+            boolean errorOccured = false;
+            if (guild.getCategories().isEmpty()) {
+                errorOccured = true;
+            }
+            List<TextChannel> textChannelList = guild.getTextChannels();
+            if (textChannelList.stream().noneMatch(textChannel -> textChannel.getId().equals(channelForThreadsId))) {
+                errorOccured = true;
+            }
+            if(errorOccured ) {
+                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
+                        .setDescription("Channel for thread creation does not exist!" +
+                                " first!")
+                        .setColor(Color.red).build()).queue();
+                return;
+            }
+            TextChannel channelForThread = textChannelList.stream()
+                    .filter(textChannel -> textChannel.getId().equals(channelForThreadsId))
+                    .toList().getFirst();
+
+            String[] threadNames = new String[bulkThreadAmount];
+            for(int i =0; i < bulkThreadAmount; i ++){
+                threadNames[i] = event.getOption("thread" + i + "").getAsString();
+            }
+            EmbedBuilder eb = new EmbedBuilder();
+            String embedDescription ="";
+            int counter =0;
+            List<ThreadChannel> threadChannelList;
+            for(String threadNamez: threadNames){
+                threadChannelList = channelForThread.getThreadChannels();
+                if(threadChannelList.stream()
+                        .noneMatch(threadChannel1 -> threadChannel1.getName().equals(threadNamez))){
+                    threadExists =false;
+                    channelForThread.createThreadChannel(threadNamez).complete();
+                }
+                if(threadExists){
+                    embedDescription +="**"+threadNamez+" has not been created**\n" +
+                            "Since the thread already exists, a new channel has not been created.\n";
+                    eb.setColor(Color.orange);
+                    counter++;
+                }
+                threadExists = true;
+            }
+            if(count == bulkThreadAmount) eb.setTitle("**FATAL ERROR").setColor(Color.red);
+            else if (count==0) eb.setTitle("**Task completed without any errors**").setColor(Color.green);
+            embedDescription+= "Task complete.";
+            eb.setDescription(embedDescription);
+            event.getHook().sendMessageEmbeds(eb.build()).queue();
+        }
+
+    }
     public void bulkChannel(SlashCommandInteractionEvent event){
         if(!event.getName().equals("bulk") && !event.getName().equals("bulkcreate")) return;
         event.deferReply().queue();
@@ -39,9 +142,9 @@ public class EventListener extends ListenerAdapter {
                     .setDescription("/bulkcreate is now available")
                     .setColor(Color.green).build()).queue();
             }
-            SlashCommands bulk = new SlashCommands(event.getJDA(), bulkAmount);
+            bulk.bulkChannelCreateor(bulkAmount);
             bulkChannelAmount = bulk.getBulkChannelAmount();
-            event.getJDA().upsertCommand(bulk.bulkChannelCreation).queue();
+            event.getJDA().upsertCommand(bulk.bulkChannelCreation).complete();
         }
         if(!bulkHasBeenSet){
             event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
@@ -93,7 +196,6 @@ public class EventListener extends ListenerAdapter {
     public void channelNavigator(SlashCommandInteractionEvent event){
         //navigation Channel creator
         if(!event.getName().equals("navigation")) return;
-        event.deferReply().queue();
         Guild guild = event.getGuild();
         List<Category> categoriesList = guild.getCategories();
         String navCatName= event.getOption("navcat").getAsString();
@@ -103,8 +205,8 @@ public class EventListener extends ListenerAdapter {
         }
         categoriesList = guild.getCategories();
         Category navCat = guild.getCategoriesByName(navCatName,false).getFirst();
-        List<TextChannel>textChannelList;
-        textChannelList = navCat.getTextChannels();
+        List<GuildChannel>textChannelList;
+        textChannelList = navCat.getChannels();
         if(textChannelList.stream().noneMatch(textChannel -> textChannel.getName().equals(navChnName))){
             navCat.createTextChannel(navChnName).complete();
         }
@@ -124,7 +226,7 @@ public class EventListener extends ListenerAdapter {
             }
             Category toCopy = guild.getCategoriesByName(catToCopyName, false).getFirst();
             if(toCopy.getTextChannels().isEmpty()) return;
-            textChannelList = toCopy.getTextChannels();
+            textChannelList = toCopy.getChannels();
             List<String> urls = textChannelList.stream()
                     .map(channel-> "**"+channel.getName()+" :** https://discord.com/channels/"
                             +guildID+"/"+channel.getId()+"\n\n").collect(Collectors.toList());

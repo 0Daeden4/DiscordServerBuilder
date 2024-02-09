@@ -11,6 +11,5 @@ public class Main {
         builder.enableIntents(GatewayIntent.MESSAGE_CONTENT);
         JDA bot = builder.build();
         bot.awaitReady();
-        new SlashCommands(bot);
     }
 }

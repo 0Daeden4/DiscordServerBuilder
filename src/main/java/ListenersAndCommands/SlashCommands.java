@@ -1,6 +1,7 @@
 package ListenersAndCommands;
 
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.*;
@@ -12,27 +13,40 @@ public class SlashCommands {
     protected SlashCommandData bulkChannelCreation = Commands.slash("bulkcreate", "Bulk creates channels, default is 1.")
             .addOption(OptionType.STRING ,"category", "This is the name of " +
                     "the category.",true);
+
+    protected SlashCommandData bulkThreadCreation = Commands.slash("bulkthread", "Bulk creates threads.")
+            .addOption(OptionType.CHANNEL, "threadchannel", "The channel in which the threads will be " +
+                    "created.", true);
+
     protected int bulkChannelAmount =1;
+    protected int amountOfThreads =1;
+    //protected Guild guild;
 
     public SlashCommands (JDA bot){
         this.bot = bot;
         bulkChannelCreateor(1);
         channelCreation();
     }
-    public SlashCommands (JDA bot, int bulkChannelAmount){
-        this.bot = bot;
-        bulkChannelCreateor(bulkChannelAmount); //creates channels for the given amount, default is 1
-        channelCreation();
-    }
+//    public SlashCommands (Guild guild){
+//       this.guild = guild;
+//        bulkChannelCreateor(1);
+//        channelCreation();
+//    }
+//    public SlashCommands (JDA bot, int bulkChannelAmount){
+//        //this.bot = bot;
+//        bulkChannelCreateor(bulkChannelAmount); //creates channels for the given amount, default is 1
+//        channelCreation();
+//    }
+
     public void channelCreation(){
         //TODO category deletion
         //TODO bulk voice channel creation
-
+        OptionData amount = new OptionData(OptionType.INTEGER, "amount", "Amount of channels " +
+                "you aim to create using /bulkcreate", true);
 
         CommandData bulk = Commands.slash("bulk","Prerequisite for bulk channel creation " +
                         "if the number is >1")
-                .addOption(OptionType.INTEGER, "amount", "Amount of channels " +
-                        "you aim to create using /bulkcreate", true);
+                .addOptions(amount);
 
         OptionData[] navigationOptions = new OptionData[]{
                 new OptionData(OptionType.STRING, "navcat", "Name of the category in which" +
@@ -55,13 +69,21 @@ public class SlashCommands {
                                 .addOptions(navigationOptions)
                                 .addOption(OptionType.CHANNEL, "channel", "Name of the " +
                                         "Channel.", true));
-        bot.updateCommands().addCommands(bulk, navigation).complete();
+
+        CommandData threadBulk =
+                Commands.slash("numofthreads", "Prerequisite for bulk thread creation.")
+                                .addOptions(amount);
+
+        bot.updateCommands().addCommands(bulk, navigation, threadBulk).complete();
     }
 
-    private void bulkChannelCreateor(int amountOfChannels){
-        if(amountOfChannels<2){
+    protected void bulkChannelCreateor(int amountOfChannels){
+        if(amountOfChannels<1){
             return;
         }
+        bulkChannelCreation = Commands.slash("bulkcreate", "Bulk creates channels, default is 1.")
+                .addOption(OptionType.STRING ,"category", "This is the name of " +
+                        "the category.",true);
 
         //recreate bulkChannelCreation
         for(int i =0; i< amountOfChannels; i++){
@@ -69,11 +91,34 @@ public class SlashCommands {
                     .addOption(OptionType.STRING, "channel"+i+"", "Name of channel"+i+".", true);
         }
         bulkChannelAmount = amountOfChannels;
-        bot.upsertCommand(bulkChannelCreation).queue();
+        bot.upsertCommand(bulkChannelCreation).complete();
+    }
+    protected void bulkThreadCreator(int amountOfThreads){
+        if(amountOfThreads<1){
+            return;
+        }
+        bulkThreadCreation = Commands.slash("bulkthread", "Bulk creates threads.")
+                .addOption(OptionType.CHANNEL, "threadchannel", "The channel in which the threads will be " +
+                        "created.", true);
+        //recreate bulkthread
+        for(int i =0; i< amountOfThreads; i++){
+            bulkThreadCreation
+                    .addOption(OptionType.STRING, "thread"+i+"", "Name of thread"+i+".", true);
+        }
+        this.amountOfThreads = amountOfThreads;
+        bot.upsertCommand(bulkThreadCreation).complete();
     }
 
 
     public int getBulkChannelAmount() {
         return bulkChannelAmount;
+    }
+
+    public int getAmountOfThreads() {
+        return amountOfThreads;
+    }
+
+    public void setAmountOfThreads(int amountOfThreads) {
+        this.amountOfThreads = amountOfThreads;
     }
 }
