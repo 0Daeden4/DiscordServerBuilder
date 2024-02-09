@@ -56,12 +56,12 @@ public class EventListener extends ListenerAdapter {
                 bulk.setAmountOfThreads(15);
             }else{
                 event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
-                        .setDescription("/bultkhread is now available")
+                        .setDescription("/bulkhead is now available")
                         .setColor(Color.green).build()).queue();
             }
             bulkThreadAmount = bulk.getAmountOfThreads();
             bulk.bulkThreadCreator(bulkThreadAmount);
-            event.getJDA().upsertCommand(bulk.bulkChannelCreation).complete();
+            event.getJDA().upsertCommand(bulk.bulkThreadCreation).complete();
         }
         if(!threadNumberDefined){
             event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
