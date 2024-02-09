@@ -35,13 +35,11 @@ public class EventListener extends ListenerAdapter {
             count++;
             bulk =new SlashCommands(event.getJDA());
         }
-        if(event.getUser().isBot()) return;
         channelNavigator(event);
         bulkChannel(event);
         bulkThread(event);
     }
     public void bulkThread(SlashCommandInteractionEvent event){//this and bulkchannel could be merged with a generic method
-
         if(!event.getName().equals("numofthreads") && !event.getName().equals("bulkthread")) return;
         event.deferReply().queue();
         if(event.getName().equals("numofthreads")){
@@ -51,12 +49,12 @@ public class EventListener extends ListenerAdapter {
 
             if(bulkAmount > 15){
                 event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount was too much!**")
-                        .setDescription("/bulkhead is now available with 15 channel options.")
+                        .setDescription("bulkhead is now available with 15 channel options.")
                         .setColor(Color.orange).build()).queue();
                 bulk.setAmountOfThreads(15);
             }else{
                 event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
-                        .setDescription("/bulkhead is now available")
+                        .setDescription("bulkhead is now available")
                         .setColor(Color.green).build()).queue();
             }
             bulkThreadAmount = bulk.getAmountOfThreads();

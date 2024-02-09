@@ -10,13 +10,9 @@ public class SlashCommands {
     private final JDA bot;
     private final OptionData category = new OptionData(OptionType.STRING ,"category", "This is the name of " +
             "the category.",true);
-    protected SlashCommandData bulkChannelCreation = Commands.slash("bulkcreate", "Bulk creates channels, default is 1.")
-            .addOption(OptionType.STRING ,"category", "This is the name of " +
-                    "the category.",true);
+    protected SlashCommandData bulkChannelCreation;
 
-    protected SlashCommandData bulkThreadCreation = Commands.slash("bulkthread", "Bulk creates threads.")
-            .addOption(OptionType.CHANNEL, "threadchannel", "The channel in which the threads will be " +
-                    "created.", true);
+    protected SlashCommandData bulkThreadCreation;
 
     protected int bulkChannelAmount =1;
     protected int amountOfThreads =1;
@@ -25,6 +21,7 @@ public class SlashCommands {
     public SlashCommands (JDA bot){
         this.bot = bot;
         bulkChannelCreateor(1);
+        bulkThreadCreator(1);
         channelCreation();
     }
 //    public SlashCommands (Guild guild){
