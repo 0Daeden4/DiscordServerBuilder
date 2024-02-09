@@ -25,16 +25,23 @@ public class EventListener extends ListenerAdapter {
 
     public void bulkChannel(SlashCommandInteractionEvent event){
         if(!event.getName().equals("bulk") && !event.getName().equals("bulkcreate")) return;
+        event.deferReply().queue();
         if(event.getName().equals("bulk")){
             bulkHasBeenSet = true;
             int bulkAmount = event.getOption("amount").getAsInt();
-            SlashCommands bulk = new SlashCommands(event.getJDA(), bulkAmount);
-            bulkChannelAmount = bulk.getBulkChannelAmount();
+            if(bulkAmount > 15){
+                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount was too much!**")
+                        .setDescription("/bulkcreate is now available with 15 channel options.")
+                        .setColor(Color.orange).build()).queue();
+                bulkAmount = 15;
+                SlashCommands bulk = new SlashCommands(event.getJDA(), bulkAmount);
+                bulkChannelAmount = bulk.getBulkChannelAmount();
+                return;
+            }
             event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
                     .setDescription("/bulkcreate is now available")
                     .setColor(Color.green).build()).queue();
         }
-        event.deferReply().queue();
         if(!bulkHasBeenSet){
             event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
                     .setDescription("You have to set the amount of channels you want to create with /bulk first!")
