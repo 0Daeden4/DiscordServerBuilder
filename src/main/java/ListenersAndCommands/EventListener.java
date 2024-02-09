@@ -34,13 +34,14 @@ public class EventListener extends ListenerAdapter {
                         .setDescription("/bulkcreate is now available with 15 channel options.")
                         .setColor(Color.orange).build()).queue();
                 bulkAmount = 15;
-                SlashCommands bulk = new SlashCommands(event.getJDA(), bulkAmount);
-                bulkChannelAmount = bulk.getBulkChannelAmount();
-                return;
-            }
+            }else{
             event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
                     .setDescription("/bulkcreate is now available")
                     .setColor(Color.green).build()).queue();
+            }
+            SlashCommands bulk = new SlashCommands(event.getJDA(), bulkAmount);
+            bulkChannelAmount = bulk.getBulkChannelAmount();
+            event.getJDA().upsertCommand(bulk.bulkChannelCreation).queue();
         }
         if(!bulkHasBeenSet){
             event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")

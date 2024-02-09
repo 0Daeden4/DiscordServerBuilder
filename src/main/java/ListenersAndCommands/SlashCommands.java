@@ -9,7 +9,7 @@ public class SlashCommands {
     private final JDA bot;
     private final OptionData category = new OptionData(OptionType.STRING ,"category", "This is the name of " +
             "the category.",true);
-    public SlashCommandData bulkChannelCreation = Commands.slash("bulkcreate", "Bulk creates channels, default is 1.")
+    protected SlashCommandData bulkChannelCreation = Commands.slash("bulkcreate", "Bulk creates channels, default is 1.")
             .addOption(OptionType.STRING ,"category", "This is the name of " +
                     "the category.",true);
     protected int bulkChannelAmount =1;
@@ -38,20 +38,20 @@ public class SlashCommands {
         };
 
         CommandData navigation =//send navigation embed
-                        Commands.slash("navigation", "Sends a navigation message containing the channel" +
+                Commands.slash("navigation", "Sends a navigation message containing the channel" +
                                 "links in a selected channel.")
-                                .addSubcommands(new SubcommandData("cattonav", "Sends an" +
-                                        "embed containing all channels and their links in this category")
-                                        .addOptions(navigationOptions)
-                                        .addOption(OptionType.CHANNEL, "copycategory", "An embed " +
+                        .addSubcommands(new SubcommandData("cattonav", "Sends an" +
+                                "embed containing all channels and their links in this category")
+                                .addOptions(navigationOptions)
+                                .addOption(OptionType.CHANNEL, "copycategory", "An embed " +
                                                 "containing all of the channel links of this category will be created."
                                         ,true))
-                                .addSubcommands(new SubcommandData("chantonav", "Creates an embed conta" +
-                                        "ining the link of this channel.")
-                                        .addOptions(navigationOptions)
-                                        .addOption(OptionType.CHANNEL, "channel", "Name of the " +
-                                                "Channel.", true));
-        bot.updateCommands().addCommands(bulk, bulkChannelCreation, navigation).queue();
+                        .addSubcommands(new SubcommandData("chantonav", "Creates an embed conta" +
+                                "ining the link of this channel.")
+                                .addOptions(navigationOptions)
+                                .addOption(OptionType.CHANNEL, "channel", "Name of the " +
+                                        "Channel.", true));
+        bot.updateCommands().addCommands(bulk, navigation).complete();
     }
 
     private void bulkChannelCreateor(int amountOfChannels){
@@ -59,12 +59,13 @@ public class SlashCommands {
             return;
         }
 
+        //recreate bulkChannelCreation
         for(int i =0; i< amountOfChannels; i++){
             bulkChannelCreation
                     .addOption(OptionType.STRING, "channel"+i+"", "Name of channel"+i+".", true);
-            bot.upsertCommand(bulkChannelCreation).queue();
         }
         bulkChannelAmount = amountOfChannels;
+        bot.upsertCommand(bulkChannelCreation).queue();
     }
 
 
