@@ -41,13 +41,15 @@ public class EventListener extends ListenerAdapter {
         log(event);
     }
     public void log(SlashCommandInteractionEvent event){
+        //TODO add thread crawl
+        //TODO make message amount adjustable with an amount command and apply its content to retrievePast
         if(!event.getName().equals("log")) return;
         boolean eventComplete = false;
-        event.deferReply(true).queue();
+        event.deferReply().queue();
          List<Message> messages = event.getChannel().getHistory().retrievePast(100).complete();
         BufferedWriter writer = null;
         String embedLikeText="";
-        File file = new File("MessageFiles"+File.separatorChar+"messages_as_embeds.html");
+        File file = new File("MessageFiles"+File.separatorChar+"messageLogs .html");
         try {
             writer = new BufferedWriter(new FileWriter(file));
             embedLikeText += "<!DOCTYPE html><html><body>" +
@@ -305,6 +307,7 @@ public class EventListener extends ListenerAdapter {
     public void channelNavigator(SlashCommandInteractionEvent event){
         //navigation Channel creator
         if(!event.getName().equals("navigation")) return;
+        event.deferReply().queue();
         Guild guild = event.getGuild();
         List<Category> categoriesList = guild.getCategories();
         String navCatName= event.getOption("navcat").getAsString();
