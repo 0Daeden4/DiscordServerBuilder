@@ -54,9 +54,9 @@ public class EventListener extends ListenerAdapter {
                         "Author: " + message.getAuthor().getName().toUpperCase() + "\n" ;
                 if(!message.getEmbeds().isEmpty()){
                     embedLikeText+="Title: \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
-                            "Description: \n" +message.getEmbeds().getFirst().getDescription()+"\n";
+                            "Description: \n" +message.getEmbeds().getFirst().getDescription();
                 }else{
-                    embedLikeText +="Content: \n" + message.getContentDisplay() + "\n";
+                    embedLikeText +="Content: \n" + message.getContentDisplay();
                 }
                         //"Timestamp: " + message.getTimeCreated().toString() + "\n" +
                 embedLikeText+="______________________________________________________________________\n\n";
