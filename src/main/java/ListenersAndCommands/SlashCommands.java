@@ -1,8 +1,6 @@
 package ListenersAndCommands;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.*;
 
@@ -20,7 +18,8 @@ public class SlashCommands {
 
     public SlashCommands (JDA bot){
         this.bot = bot;
-        bulkChannelCreateor(1);
+
+        bulkChannelCreator(1);
         bulkThreadCreator(1);
         channelCreation();
     }
@@ -39,7 +38,7 @@ public class SlashCommands {
         //TODO category deletion
         //TODO bulk voice channel creation
         OptionData amount = new OptionData(OptionType.INTEGER, "amount", "Amount of channels " +
-                "you aim to create using /bulkcreate", true);
+                "you aim to create using /bulk_create", true);
 
         CommandData bulk = Commands.slash("bulk","Prerequisite for bulk channel creation " +
                         "if the number is >1")
@@ -71,10 +70,18 @@ public class SlashCommands {
                 Commands.slash("numofthreads", "Prerequisite for bulk thread creation.")
                                 .addOptions(amount);
 
-        bot.updateCommands().addCommands(bulk, navigation, threadBulk).queue();
+        CommandData embedSender =
+                Commands.slash("embed", "Sends an embed to the channel.")
+                                .addOption(OptionType.STRING, "title", "Title of the " +
+                                        "embed.", true)
+                                        .addOption(OptionType.STRING, "desc", "Description of " +
+                                                "the embed.", true);
+
+        bot.updateCommands().addCommands(bulk, navigation, threadBulk, embedSender
+                , bulkThreadCreation, bulkChannelCreation).complete();
     }
 
-    protected void bulkChannelCreateor(int amountOfChannels){
+    protected void bulkChannelCreator(int amountOfChannels){
         if(amountOfChannels<1){
             return;
         }
@@ -105,6 +112,8 @@ public class SlashCommands {
         this.amountOfThreads = amountOfThreads;
         bot.upsertCommand(bulkThreadCreation).complete();
     }
+
+
 
 
     public int getBulkChannelAmount() {

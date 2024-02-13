@@ -1,11 +1,7 @@
 package ListenersAndCommands;
 
-import net.dv8tion.jda.api.AccountType;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -16,8 +12,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.awt.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 
@@ -38,6 +32,18 @@ public class EventListener extends ListenerAdapter {
         channelNavigator(event);
         bulkChannel(event);
         bulkThread(event);
+        embeds(event);
+    }
+    public void embeds(SlashCommandInteractionEvent event){
+        if(!event.getName().equals("embed")) return;
+        event.deferReply().queue();
+        String title = event.getOption("title").getAsString();
+        title = "**"+title+"**";
+        String desc = event.getOption("desc").getAsString();
+        EmbedBuilder eb = new EmbedBuilder();
+        Color c = Color.getHSBColor((float)Math.random(),(float)Math.random(),(float)Math.random());
+        eb.setTitle(title).setDescription(desc).setColor(c);
+        event.getHook().sendMessageEmbeds(eb.build()).queue();
     }
     public void bulkThread(SlashCommandInteractionEvent event){//this and bulkchannel could be merged with a generic method
         if(!event.getName().equals("numofthreads") && !event.getName().equals("bulkthread")) return;
@@ -140,7 +146,7 @@ public class EventListener extends ListenerAdapter {
                     .setDescription("/bulkcreate is now available")
                     .setColor(Color.green).build()).queue();
             }
-            bulk.bulkChannelCreateor(bulkAmount);
+            bulk.bulkChannelCreator(bulkAmount);
             bulkChannelAmount = bulk.getBulkChannelAmount();
             event.getJDA().upsertCommand(bulk.bulkChannelCreation).complete();
         }
@@ -201,7 +207,6 @@ public class EventListener extends ListenerAdapter {
         if(categoriesList.stream().noneMatch(category -> category.getName().equals(navCatName))){
             guild.createCategory(navCatName).complete();
         }
-        categoriesList = guild.getCategories();
         Category navCat = guild.getCategoriesByName(navCatName,false).getFirst();
         List<GuildChannel>textChannelList;
         textChannelList = navCat.getChannels();
