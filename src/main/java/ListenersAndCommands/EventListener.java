@@ -45,24 +45,34 @@ public class EventListener extends ListenerAdapter {
          List<Message> messages = event.getChannel().getHistory().retrievePast(100).complete();
         BufferedWriter writer = null;
         String embedLikeText="";
-        File file = new File("MessageFiles"+File.separatorChar+"messages_as_embeds.txt");
+        File file = new File("MessageFiles"+File.separatorChar+"messages_as_embeds.html");
         try {
             writer = new BufferedWriter(new FileWriter(file));
+            embedLikeText += "<!DOCTYPE html><html><body>" +
+                    "<h1>LOGS</h1>" +"<p>";
             for (Message message : messages) {
                 if(message.getContentDisplay().startsWith("/")) continue;
                 embedLikeText += "\n______________________________________________________________________\n" +
-                        "Author: \n" + message.getAuthor().getName().toUpperCase() + "\n" ;
+                        "<b>Author:</b> \n" + message.getAuthor().getName().toUpperCase() + "\n" ;
                 if(!message.getEmbeds().isEmpty()){
-                    embedLikeText+="Title: \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
-                            "Description: \n" +message.getEmbeds().getFirst().getDescription()+"\n";
+                    embedLikeText+="<b>Title:</b> \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
+                            "<b>Description:</b> \n" +message.getEmbeds().getFirst().getDescription()+"\n";
                     if(message.getEmbeds().getFirst().getImage() !=null){
-                        embedLikeText+= "Image: \n" + message.getEmbeds().getFirst().getImage()+"\n";
+                        embedLikeText+= "<b>Image:</b> \n"+  "<img src=\""+message.getEmbeds().getFirst()
+                                .getImage().getUrl() +
+                            "\" alt=\"image\" style=\"width:40%; height:auto;\"> " +"\n";
                     }
                 }else{
-                    embedLikeText +="Content: \n" + message.getContentDisplay() + "\n";
+                    embedLikeText +="<b>Content:</b> \n" + message.getContentDisplay() + "\n";
                 }
+
                         //"Timestamp: " + message.getTimeCreated().
             }
+            embedLikeText+="</p> </body> </html>";
+            embedLikeText =embedLikeText.replace("**", "<b>");
+            embedLikeText = embedLikeText.replace("\n", "<br>");
+
+            embedLikeText = replaceEverySecondOccurrence(embedLikeText, "<b>", "</b>");
             writer.write(embedLikeText);
             event.getHook().sendFiles(FileUpload.fromData(file)).queue();
             eventComplete =true;
@@ -78,6 +88,20 @@ public class EventListener extends ListenerAdapter {
             }
         }
         if(!eventComplete) event.getHook().sendMessage("Failiure.").queue();
+    }
+    private String replaceEverySecondOccurrence(String text, String search, String replacement) {
+        int index = -1;
+        boolean replace = false;
+        StringBuilder sb = new StringBuilder(text);
+        while ((index = sb.indexOf(search, index + 1)) != -1) {
+            if (replace) {
+                sb.replace(index, index + search.length(), replacement);
+                index += replacement.length() - search.length();
+            }
+            replace = !replace;
+        }
+
+        return sb.toString();
     }
     public void embeds(SlashCommandInteractionEvent event){
         if(!event.getName().equals("embed")) return;
