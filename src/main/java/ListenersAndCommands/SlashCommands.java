@@ -71,7 +71,7 @@ public class SlashCommands {
                 Commands.slash("numofthreads", "Prerequisite for bulk thread creation.")
                                 .addOptions(amount);
 
-        bot.updateCommands().addCommands(bulk, navigation, threadBulk).complete();
+        bot.updateCommands().addCommands(bulk, navigation, threadBulk).queue();
     }
 
     protected void bulkChannelCreateor(int amountOfChannels){
