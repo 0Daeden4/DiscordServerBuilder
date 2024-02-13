@@ -50,7 +50,7 @@ public class EventListener extends ListenerAdapter {
             writer = new BufferedWriter(new FileWriter(file));
             for (Message message : messages) {
                 if(message.getContentDisplay().startsWith("/")) continue;
-                embedLikeText += "______________________________________________________________________" +
+                embedLikeText += "______________________________________________________________________\n" +
                         "Author: " + message.getAuthor().getName().toUpperCase() + "\n" ;
                 if(!message.getEmbeds().isEmpty()){
                     embedLikeText+="Title: \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
