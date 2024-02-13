@@ -1,7 +1,7 @@
 package ListenersAndCommands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -9,8 +9,11 @@ import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.awt.*;
+import java.io.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,40 @@ public class EventListener extends ListenerAdapter {
         bulkChannel(event);
         bulkThread(event);
         embeds(event);
+        log(event);
+    }
+    public void log(SlashCommandInteractionEvent event){
+        if(!event.getName().equals("log")) return;
+        boolean eventComplete = false;
+        event.deferReply(true).queue();
+         List<Message> messages = event.getChannel().getHistory().retrievePast(100).complete();
+        BufferedWriter writer = null;
+        String embedLikeText="";
+        File file = new File("MessageFiles"+File.separatorChar+"messages_as_embeds.txt");
+        try {
+            writer = new BufferedWriter(new FileWriter(file));
+            for (Message message : messages) {
+                embedLikeText += "----------------------------------------\n" +
+                        "Author: " + message.getAuthor().getName() + "\n" +
+                        "Timestamp: " + message.getTimeCreated().toString() + "\n" +
+                        "Content: \n" + message.getContentDisplay() + "\n\n" +
+                        "----------------------------------------\n\n";
+            }
+            writer.write(embedLikeText);
+            event.getHook().sendFiles(FileUpload.fromData(file)).queue();
+            eventComplete =true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            event.getHook().sendMessage("error").queue();
+        }finally {
+            try {
+                writer.close();
+                file.delete();
+            } catch (IOException e) {
+                throw new RuntimeException("Writer could not be closed.");
+            }
+        }
+        if(!eventComplete) event.getHook().sendMessage("Failiure.").queue();
     }
     public void embeds(SlashCommandInteractionEvent event){
         if(!event.getName().equals("embed")) return;

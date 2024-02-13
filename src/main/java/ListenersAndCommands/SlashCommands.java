@@ -76,9 +76,12 @@ public class SlashCommands {
                                         "embed.", true)
                                         .addOption(OptionType.STRING, "desc", "Description of " +
                                                 "the embed.", true);
+        CommandData log =
+                Commands.slash("log", "Logs a given channel.")
+                        .addOption(OptionType.INTEGER,"placeholder", "placeholder");
 
         bot.updateCommands().addCommands(bulk, navigation, threadBulk, embedSender
-                , bulkThreadCreation, bulkChannelCreation).complete();
+                , bulkThreadCreation, bulkChannelCreation, log).complete();
     }
 
     protected void bulkChannelCreator(int amountOfChannels){
