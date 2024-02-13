@@ -15,6 +15,8 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import java.awt.*;
 import java.io.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -62,9 +64,23 @@ public class EventListener extends ListenerAdapter {
                                 .getImage().getUrl() +
                             "\" alt=\"image\" style=\"width:40%; height:auto; overflow: auto;\"> " ;
                     }
+                    if(message.getEmbeds().getFirst().getDescription().contains("http") ){
+                    String siteLink =extractLink(message.getEmbeds().getFirst().getDescription());
+                        embedLikeText += "<iframe src=\""+siteLink+"\" width=\"600\" height=\"400\">" +
+                                "</iframe>";
+                    }
                 }else{
                     embedLikeText +="<p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
+                    String videoLink =extractLink(message.getContentDisplay());
+                    if(message.getContentDisplay().contains(videoLink) ){
+                        embedLikeText += "<video width=\"600\" height=\"400\" controls>" +
+                                "<source src=\""+videoLink+"\" type=\"video/mp4\">" +
+                                "Your browser does not support the video tag." +
+                                "</video>";
+                    }
+
                 }
+
                 embedLikeText+="</div>";
                         //"Timestamp: " + message.getTimeCreated().
             }
@@ -103,6 +119,18 @@ public class EventListener extends ListenerAdapter {
 
         return sb.toString();
     }
+    private String extractLink(String text){
+        String urlPattern = "(http://www\\.|https://www\\.|http://|https://)[a-zA-Z0-9\\-\\.]+\\." +
+                "[a-zA-Z]{2,5}(:[0-9]{1,5})?(/\\S*)?";
+        Pattern pattern = Pattern.compile(urlPattern);
+        Matcher matcher = pattern.matcher(text);
+        if (matcher.find()) {
+            return matcher.group();
+        } else {
+            return "Invalid Url.";
+        }
+
+    }
     public void embeds(SlashCommandInteractionEvent event){
         if(!event.getName().equals("embed")) return;
         event.deferReply().queue();
@@ -111,7 +139,7 @@ public class EventListener extends ListenerAdapter {
         String desc = event.getOption("desc").getAsString();
         EmbedBuilder eb = new EmbedBuilder();
         Color c = Color.getHSBColor((float)Math.random(),(float)Math.random(),(float)Math.random());
-        if(!event.getOption("image").equals(null)){
+        if(event.getOption("image")!=null){
             eb.setImage(event.getOption("image").getAsString());
         }
         eb.setTitle(title).setDescription(desc).setColor(c);
