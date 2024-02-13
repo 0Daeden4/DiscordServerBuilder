@@ -55,7 +55,7 @@ public class EventListener extends ListenerAdapter {
                 if(!message.getEmbeds().isEmpty()){
                     embedLikeText+="Title: \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
                             "Description: \n" +message.getEmbeds().getFirst().getDescription()+"\n";
-                    if(!message.getEmbeds().getFirst().getImage().equals(null)){
+                    if(message.getEmbeds().getFirst().getImage() !=null){
                         embedLikeText+= "Image: \n" + message.getEmbeds().getFirst().getImage()+"\n";
                     }
                 }else{
