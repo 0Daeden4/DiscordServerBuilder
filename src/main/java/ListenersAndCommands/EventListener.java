@@ -73,12 +73,10 @@ public class EventListener extends ListenerAdapter {
                     }
                 }else{
                     embedLikeText +="<p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
-                    String videoLink =extractLink(message.getContentDisplay());
-                    if(message.getContentDisplay().contains(videoLink) ){
-                        embedLikeText += "<video width=\"600\" height=\"400\" controls>" +
-                                "<source src=\""+videoLink+"\" type=\"video/mp4\">" +
-                                "Your browser does not support the video tag." +
-                                "</video>";
+                    if(message.getContentDisplay().contains("http") ){
+                        String siteLink =extractLink(message.getContentDisplay());
+                        embedLikeText += "<iframe src=\""+siteLink+"\" width=\"600\" height=\"400\">" +
+                                "</iframe>";
                     }
                     if( !message.getAttachments().isEmpty()){
                         String attachmentURL =message.getAttachments().getFirst().getUrl();
