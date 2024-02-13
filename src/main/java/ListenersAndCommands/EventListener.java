@@ -50,16 +50,15 @@ public class EventListener extends ListenerAdapter {
             writer = new BufferedWriter(new FileWriter(file));
             for (Message message : messages) {
                 if(message.getContentDisplay().startsWith("/")) continue;
-                embedLikeText += "______________________________________________________________________\n" +
-                        "Author: " + message.getAuthor().getName().toUpperCase() + "\n" ;
+                embedLikeText += "\n______________________________________________________________________\n" +
+                        "Author: \n" + message.getAuthor().getName().toUpperCase() + "\n" ;
                 if(!message.getEmbeds().isEmpty()){
                     embedLikeText+="Title: \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
-                            "Description: \n" +message.getEmbeds().getFirst().getDescription();
+                            "Description: \n" +message.getEmbeds().getFirst().getDescription()+"\n";
                 }else{
-                    embedLikeText +="Content: \n" + message.getContentDisplay();
+                    embedLikeText +="Content: \n" + message.getContentDisplay() + "\n";
                 }
-                        //"Timestamp: " + message.getTimeCreated().toString() + "\n" +
-                embedLikeText+="______________________________________________________________________\n\n";
+                        //"Timestamp: " + message.getTimeCreated().
             }
             writer.write(embedLikeText);
             event.getHook().sendFiles(FileUpload.fromData(file)).queue();
