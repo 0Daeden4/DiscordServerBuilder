@@ -49,26 +49,26 @@ public class EventListener extends ListenerAdapter {
         try {
             writer = new BufferedWriter(new FileWriter(file));
             embedLikeText += "<!DOCTYPE html><html><body>" +
-                    "<h1>LOGS</h1>" +"<p>";
+                    "<h1>LOGS</h1>";
             for (Message message : messages) {
                 if(message.getContentDisplay().startsWith("/")) continue;
-                embedLikeText += "\n______________________________________________________________________\n" +
-                        "<b>Author:</b> \n" + message.getAuthor().getName().toUpperCase() + "\n" ;
+                embedLikeText += "<div style=\"border: 2px solid black; padding: 10px; display: grid; grid-template-columns: auto auto;\">"+
+                        "<p>**Author:** \n" + message.getAuthor().getName().toUpperCase() + "\n</p>" ;
                 if(!message.getEmbeds().isEmpty()){
-                    embedLikeText+="<b>Title:</b> \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
-                            "<b>Description:</b> \n" +message.getEmbeds().getFirst().getDescription()+"\n";
+                    embedLikeText+="<p> " + message.getEmbeds().getFirst().getTitle()+"\n"+
+                            "" +message.getEmbeds().getFirst().getDescription()+"\n</p>";
                     if(message.getEmbeds().getFirst().getImage() !=null){
-                        embedLikeText+= "<b>Image:</b> \n"+  "<img src=\""+message.getEmbeds().getFirst()
+                        embedLikeText+=   "<img src=\""+message.getEmbeds().getFirst()
                                 .getImage().getUrl() +
-                            "\" alt=\"image\" style=\"width:40%; height:auto;\"> " +"\n";
+                            "\" alt=\"image\" style=\"width:40%; height:auto; overflow: auto;\"> " ;
                     }
                 }else{
-                    embedLikeText +="<b>Content:</b> \n" + message.getContentDisplay() + "\n";
+                    embedLikeText +="<p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
                 }
-
+                embedLikeText+="</div>";
                         //"Timestamp: " + message.getTimeCreated().
             }
-            embedLikeText+="</p> </body> </html>";
+            embedLikeText+="</body> </html>";
             embedLikeText =embedLikeText.replace("**", "<b>");
             embedLikeText = embedLikeText.replace("\n", "<br>");
 
