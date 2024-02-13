@@ -56,8 +56,8 @@ public class EventListener extends ListenerAdapter {
                     "<h1>LOGS</h1>";
             for (Message message : messages) {
                 if(message.getContentDisplay().startsWith("/")) continue;
-                embedLikeText += "<div style=\"border: 2px solid black; padding: 10px; display: grid; grid-template-columns: auto auto;\">"+
-                        "<p>**Author:** \n" + message.getAuthor().getName().toUpperCase() + "\n</p>" ;
+                embedLikeText += "<div style=\"border: 2px solid black; padding: 10px; display: grid; grid-template-columns: auto auto;\">"
+                        +"<small><p>**Author:** \n" + message.getAuthor().getName().toUpperCase() + "\n</p></small>" ;
                 if(!message.getEmbeds().isEmpty()){
                     embedLikeText+="<p> " + message.getEmbeds().getFirst().getTitle()+"\n"+
                             "" +message.getEmbeds().getFirst().getDescription()+"\n</p>";
@@ -67,7 +67,8 @@ public class EventListener extends ListenerAdapter {
                             "\" alt=\"image\" style=\"width:40%; height:auto; overflow: auto;\"> " ;
                     }
                     if(message.getEmbeds().getFirst().getDescription().contains("http") ){
-                    String siteLink =extractLink(message.getEmbeds().getFirst().getDescription());
+                        String siteLink =extractLink(message.getEmbeds().getFirst().getDescription());
+                        embedLikeText =embedLikeText.replace(siteLink, "<a href=\""+siteLink+"\"> **Link**</a>");
                         embedLikeText += "<iframe src=\""+siteLink+"\" width=\"600\" height=\"400\">" +
                                 "</iframe>";
                     }
@@ -75,8 +76,10 @@ public class EventListener extends ListenerAdapter {
                     embedLikeText +="<p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
                     if(message.getContentDisplay().contains("http") ){
                         String siteLink =extractLink(message.getContentDisplay());
+                        embedLikeText =embedLikeText.replace(siteLink, "<a href=\""+siteLink+"\"> **Link**</a>");
                         embedLikeText += "<iframe src=\""+siteLink+"\" width=\"600\" height=\"400\">" +
                                 "</iframe>";
+
                     }
                     if( !message.getAttachments().isEmpty()){
                         String attachmentURL =message.getAttachments().getFirst().getUrl();
