@@ -55,6 +55,9 @@ public class EventListener extends ListenerAdapter {
                 if(!message.getEmbeds().isEmpty()){
                     embedLikeText+="Title: \n" + message.getEmbeds().getFirst().getTitle()+"\n"+
                             "Description: \n" +message.getEmbeds().getFirst().getDescription()+"\n";
+                    if(!message.getEmbeds().getFirst().getImage().equals(null)){
+                        embedLikeText+= "Image: \n" + message.getEmbeds().getFirst().getImage()+"\n";
+                    }
                 }else{
                     embedLikeText +="Content: \n" + message.getContentDisplay() + "\n";
                 }
@@ -84,6 +87,9 @@ public class EventListener extends ListenerAdapter {
         String desc = event.getOption("desc").getAsString();
         EmbedBuilder eb = new EmbedBuilder();
         Color c = Color.getHSBColor((float)Math.random(),(float)Math.random(),(float)Math.random());
+        if(!event.getOption("image").equals(null)){
+            eb.setImage(event.getOption("image").getAsString());
+        }
         eb.setTitle(title).setDescription(desc).setColor(c);
         event.getHook().sendMessageEmbeds(eb.build()).queue();
     }

@@ -75,7 +75,9 @@ public class SlashCommands {
                                 .addOption(OptionType.STRING, "title", "Title of the " +
                                         "embed.", true)
                                         .addOption(OptionType.STRING, "desc", "Description of " +
-                                                "the embed.", true);
+                                                "the embed.", true)
+                        .addOption(OptionType.STRING, "image", "Includes an image in the embed if the" +
+                                "input is a URL.");
         CommandData log =
                 Commands.slash("log", "Logs a given channel.")
                         .addOption(OptionType.INTEGER,"placeholder", "placeholder");
