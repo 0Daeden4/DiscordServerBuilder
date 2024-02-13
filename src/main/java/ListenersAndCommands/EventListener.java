@@ -78,6 +78,11 @@ public class EventListener extends ListenerAdapter {
                                 "Your browser does not support the video tag." +
                                 "</video>";
                     }
+                    if( !message.getAttachments().isEmpty()){
+                        String attachmentURL =message.getAttachments().getFirst().getUrl();
+                        embedLikeText+=   "<img src=\""+attachmentURL +
+                                "\" alt=\"image\" style=\"width:40%; height:auto; overflow: auto;\"> " ;
+                    }
 
                 }
 
@@ -140,7 +145,7 @@ public class EventListener extends ListenerAdapter {
         EmbedBuilder eb = new EmbedBuilder();
         Color c = Color.getHSBColor((float)Math.random(),(float)Math.random(),(float)Math.random());
         if(event.getOption("image")!=null){
-            eb.setImage(event.getOption("image").getAsString());
+            eb.setImage(event.getOption("image").getAsAttachment().getUrl());
         }
         eb.setTitle(title).setDescription(desc).setColor(c);
         event.getHook().sendMessageEmbeds(eb.build()).queue();
