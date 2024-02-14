@@ -113,7 +113,7 @@ public class EventListener extends ListenerAdapter {
                     "</head>" +
                     "<body>" +
                     "<h1>"+event.getChannel().getName().toUpperCase()+"</h1>";
-            for (Message message : messages) {
+            for (Message message : messages) {//
                 if(message.getContentDisplay().startsWith("/")) continue;
                 embedLikeText+= "<div class=\"container\">" +
                         "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\">Toggle</button>";
