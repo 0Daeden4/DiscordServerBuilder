@@ -6,11 +6,11 @@ import net.dv8tion.jda.api.interactions.commands.build.*;
 
 public class SlashCommands {
     private final JDA bot;
-    private final OptionData category = new OptionData(OptionType.STRING ,"category", "This is the name of " +
-            "the category.",true);
-    protected SlashCommandData bulkChannelCreation;
+    //private final OptionData category = new OptionData(OptionType.STRING ,"category", "This is the name of " +
+            //"the category.",true);
+    //protected SlashCommandData bulkChannelCreation;
 
-    protected SlashCommandData bulkThreadCreation;
+    //protected SlashCommandData bulkThreadCreation;
 
     protected int bulkChannelAmount =1;
     protected int amountOfThreads =1;
@@ -19,8 +19,8 @@ public class SlashCommands {
     public SlashCommands (JDA bot){
         this.bot = bot;
 
-        bulkChannelCreator(1);
-        bulkThreadCreator(1);
+        //bulkChannelCreator(1);
+        //bulkThreadCreator(1);
         channelCreation();
     }
 //    public SlashCommands (Guild guild){
@@ -37,13 +37,18 @@ public class SlashCommands {
     public void channelCreation(){
         //TODO category deletion
         //TODO bulk voice channel creation
-        OptionData amount = new OptionData(OptionType.INTEGER, "amount", "Amount of channels " +
-                "you aim to create using /bulk_create", true);
+//        OptionData amount = new OptionData(OptionType.INTEGER, "amount", "Amount of channels " +
+//                "you aim to create using /bulk_create", true);
 
-        CommandData bulk = Commands.slash("bulk","Prerequisite for bulk channel creation " +
-                        "if the number is >1")
-                .addOptions(amount);
-
+//        CommandData bulk = Commands.slash("bulk","Prerequisite for bulk channel creation " + //out of commission
+//                        "if the number is >1")
+//                .addOptions(amount);
+        OptionData[] titleDesc = new OptionData[]{
+                new OptionData(OptionType.STRING, "title", "Title of the " +
+                        "embed.", true),
+                new OptionData(OptionType.STRING, "desc", "Description of " +
+                        "the embed.", true)
+        };
         OptionData[] navigationOptions = new OptionData[]{
                 new OptionData(OptionType.STRING, "navcat", "Name of the category in which" +
                         " the navigation channel exists/ will be created", true),
@@ -66,57 +71,59 @@ public class SlashCommands {
                                 .addOption(OptionType.CHANNEL, "channel", "Name of the " +
                                         "Channel.", true));
 
-        CommandData threadBulk =
-                Commands.slash("numofthreads", "Prerequisite for bulk thread creation.")
-                                .addOptions(amount);
+//        CommandData threadBulk = //out of commission
+//                Commands.slash("numofthreads", "Prerequisite for bulk thread creation.")
+//                                .addOptions(amount);
 
         CommandData embedSender =
                 Commands.slash("embed", "Sends an embed to the channel.")
-                                .addOption(OptionType.STRING, "title", "Title of the " +
-                                        "embed.", true)
-                                        .addOption(OptionType.STRING, "desc", "Description of " +
-                                                "the embed.", true)
+                        .addOptions(titleDesc)
                         .addOption(OptionType.ATTACHMENT, "image", "Includes an image in the embed if the" +
                                 "input is a URL.");
         CommandData log =
                 Commands.slash("log", "Logs a given channel.")
                         .addOption(OptionType.INTEGER,"placeholder", "placeholder");
+        CommandData embedPdf =
+                Commands.slash("embedpdf","PDF actions.")
+//                                .addOption(OptionType.ATTACHMENT, "File","Your PDF File.", true)
+                        .addOptions(titleDesc)
+                        .addOption(OptionType.INTEGER, "page", "Number of the page",true);
 
-        bot.updateCommands().addCommands(bulk, navigation, threadBulk, embedSender
-                , bulkThreadCreation, bulkChannelCreation, log).complete();
+        bot.updateCommands().addCommands(navigation, embedSender, log, embedPdf).complete();
     }
 
-    protected void bulkChannelCreator(int amountOfChannels){
-        if(amountOfChannels<1){
-            return;
-        }
-        bulkChannelCreation = Commands.slash("bulkcreate", "Bulk creates channels, default is 1.")
-                .addOption(OptionType.STRING ,"category", "This is the name of " +
-                        "the category.",true);
-
-        //recreate bulkChannelCreation
-        for(int i =0; i< amountOfChannels; i++){
-            bulkChannelCreation
-                    .addOption(OptionType.STRING, "channel"+i+"", "Name of channel"+i+".", true);
-        }
-        bulkChannelAmount = amountOfChannels;
-        bot.upsertCommand(bulkChannelCreation).complete();
-    }
-    protected void bulkThreadCreator(int amountOfThreads){
-        if(amountOfThreads<1){
-            return;
-        }
-        bulkThreadCreation = Commands.slash("bulkthread", "Bulk creates threads.")
-                .addOption(OptionType.CHANNEL, "threadchannel", "The channel in which the threads will be " +
-                        "created.", true);
-        //recreate bulkthread
-        for(int i =0; i< amountOfThreads; i++){
-            bulkThreadCreation
-                    .addOption(OptionType.STRING, "thread"+i+"", "Name of thread"+i+".", true);
-        }
-        this.amountOfThreads = amountOfThreads;
-        bot.upsertCommand(bulkThreadCreation).complete();
-    }
+    //out of commission
+//    protected void bulkChannelCreator(int amountOfChannels){
+//        if(amountOfChannels<1){
+//            return;
+//        }
+//        bulkChannelCreation = Commands.slash("bulkcreate", "Bulk creates channels, default is 1.")
+//                .addOption(OptionType.STRING ,"category", "This is the name of " +
+//                        "the category.",true);
+//
+//        //recreate bulkChannelCreation
+//        for(int i =0; i< amountOfChannels; i++){
+//            bulkChannelCreation
+//                    .addOption(OptionType.STRING, "channel"+i+"", "Name of channel"+i+".", true);
+//        }
+//        bulkChannelAmount = amountOfChannels;
+//        bot.upsertCommand(bulkChannelCreation).complete();
+//    }
+//    protected void bulkThreadCreator(int amountOfThreads){
+//        if(amountOfThreads<1){
+//            return;
+//        }
+//        bulkThreadCreation = Commands.slash("bulkthread", "Bulk creates threads.")
+//                .addOption(OptionType.CHANNEL, "threadchannel", "The channel in which the threads will be " +
+//                        "created.", true);
+//        //recreate bulkthread
+//        for(int i =0; i< amountOfThreads; i++){
+//            bulkThreadCreation
+//                    .addOption(OptionType.STRING, "thread"+i+"", "Name of thread"+i+".", true);
+//        }
+//        this.amountOfThreads = amountOfThreads;
+//        bot.upsertCommand(bulkThreadCreation).complete();
+//    }
 
 
 

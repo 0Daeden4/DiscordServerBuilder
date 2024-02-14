@@ -11,9 +11,16 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.rendering.PDFRenderer;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,10 +42,11 @@ public class EventListener extends ListenerAdapter {
             bulk =new SlashCommands(event.getJDA());
         }
         channelNavigator(event);
-        bulkChannel(event);
-        bulkThread(event);
+//        bulkChannel(event);
+//        bulkThread(event);
         embeds(event);
         log(event);
+        pdfActions(event);
     }
     public void log(SlashCommandInteractionEvent event){
         //TODO add thread crawl
@@ -113,7 +121,7 @@ public class EventListener extends ListenerAdapter {
                     "</head>" +
                     "<body>" +
                     "<h1>"+event.getChannel().getName().toUpperCase()+"</h1>";
-            for (Message message : messages) {//
+            for (Message message : messages) {
                 if(message.getContentDisplay().startsWith("/")) continue;
                 embedLikeText+= "<div class=\"container\">" +
                         "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\">Toggle</button>";
@@ -209,169 +217,165 @@ public class EventListener extends ListenerAdapter {
     public void embeds(SlashCommandInteractionEvent event){
         if(!event.getName().equals("embed")) return;
         event.deferReply().queue();
-        String title = event.getOption("title").getAsString();
-        title = "**"+title+"**";
-        String desc = event.getOption("desc").getAsString();
-        EmbedBuilder eb = new EmbedBuilder();
-        Color c = Color.getHSBColor((float)Math.random(),(float)Math.random(),(float)Math.random());
+        MessageEmbed embed =titleDescEmbed(event);
+        EmbedBuilder eb = new EmbedBuilder(embed);
         if(event.getOption("image")!=null){
             eb.setImage(event.getOption("image").getAsAttachment().getUrl());
         }
-        eb.setTitle(title).setDescription(desc).setColor(c);
         event.getHook().sendMessageEmbeds(eb.build()).queue();
     }
-    public void bulkThread(SlashCommandInteractionEvent event){//this and bulkchannel could be merged with a generic method
-        if(!event.getName().equals("numofthreads") && !event.getName().equals("bulkthread")) return;
-        event.deferReply().queue();
-        if(event.getName().equals("numofthreads")){
-            threadNumberDefined = true;
-            int bulkAmount = event.getOption("amount").getAsInt();
-            bulk.setAmountOfThreads(bulkAmount);
-
-            if(bulkAmount > 15){
-                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount was too much!**")
-                        .setDescription("bulkhead is now available with 15 channel options.")
-                        .setColor(Color.orange).build()).queue();
-                bulk.setAmountOfThreads(15);
-            }else{
-                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
-                        .setDescription("bulkhead is now available")
-                        .setColor(Color.green).build()).queue();
-            }
-            bulkThreadAmount = bulk.getAmountOfThreads();
-            bulk.bulkThreadCreator(bulkThreadAmount);
-            event.getJDA().upsertCommand(bulk.bulkThreadCreation).complete();
-        }
-        if(!threadNumberDefined){
-            event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
-                    .setDescription("You have to set the amount of threads you want to create with /numofthreads" +
-                            " first!")
-                    .setColor(Color.red).build()).queue();
-        }
-
-        if(event.getName().equals("bulkthread")) {
-            Guild guild = event.getGuild();
-            boolean threadExists = true;
-            String channelForThreadsId = event.getOption("threadchannel").getAsChannel().getId();
-
-            //TODO standardize checks with methods
-            boolean errorOccured = false;
-            if (guild.getCategories().isEmpty()) {
-                errorOccured = true;
-            }
-            List<TextChannel> textChannelList = guild.getTextChannels();
-            if (textChannelList.stream().noneMatch(textChannel -> textChannel.getId().equals(channelForThreadsId))) {
-                errorOccured = true;
-            }
-            if(errorOccured ) {
-                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
-                        .setDescription("Channel for thread creation does not exist!" +
-                                " first!")
-                        .setColor(Color.red).build()).queue();
-                return;
-            }
-            TextChannel channelForThread = textChannelList.stream()
-                    .filter(textChannel -> textChannel.getId().equals(channelForThreadsId))
-                    .toList().getFirst();
-
-            String[] threadNames = new String[bulkThreadAmount];
-            for(int i =0; i < bulkThreadAmount; i ++){
-                threadNames[i] = event.getOption("thread" + i + "").getAsString();
-            }
-            EmbedBuilder eb = new EmbedBuilder();
-            String embedDescription ="";
-            int counter =0;
-            List<ThreadChannel> threadChannelList;
-            for(String threadNamez: threadNames){
-                threadChannelList = channelForThread.getThreadChannels();
-                if(threadChannelList.stream()
-                        .noneMatch(threadChannel1 -> threadChannel1.getName().equals(threadNamez))){
-                    threadExists =false;
-                    channelForThread.createThreadChannel(threadNamez).complete();
-                }
-                if(threadExists){
-                    embedDescription +="**"+threadNamez+" has not been created**\n" +
-                            "Since the thread already exists, a new channel has not been created.\n";
-                    eb.setColor(Color.orange);
-                    counter++;
-                }
-                threadExists = true;
-            }
-            if(count == bulkThreadAmount) eb.setTitle("**FATAL ERROR").setColor(Color.red);
-            else if (count==0) eb.setTitle("**Task completed without any errors**").setColor(Color.green);
-            embedDescription+= "Task complete.";
-            eb.setDescription(embedDescription);
-            event.getHook().sendMessageEmbeds(eb.build()).queue();
-        }
-
-    }
-    public void bulkChannel(SlashCommandInteractionEvent event){
-        if(!event.getName().equals("bulk") && !event.getName().equals("bulkcreate")) return;
-        event.deferReply().queue();
-        if(event.getName().equals("bulk")){
-            bulkHasBeenSet = true;
-            int bulkAmount = event.getOption("amount").getAsInt();
-            if(bulkAmount > 15){
-                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount was too much!**")
-                        .setDescription("/bulkcreate is now available with 15 channel options.")
-                        .setColor(Color.orange).build()).queue();
-                bulkAmount = 15;
-            }else{
-            event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
-                    .setDescription("/bulkcreate is now available")
-                    .setColor(Color.green).build()).queue();
-            }
-            bulk.bulkChannelCreator(bulkAmount);
-            bulkChannelAmount = bulk.getBulkChannelAmount();
-            event.getJDA().upsertCommand(bulk.bulkChannelCreation).complete();
-        }
-        if(!bulkHasBeenSet){
-            event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
-                    .setDescription("You have to set the amount of channels you want to create with /bulk first!")
-                    .setColor(Color.red).build()).queue();
-        }
-
-        if(event.getName().equals("bulkcreate")) {
-            Guild guild = event.getGuild();
-            boolean channelExists = true;
-            String catName = event.getOption("category").getAsString();
-            if (guild.getCategories().isEmpty()) {
-                guild.createCategory(catName).complete();
-            }
-            List<Category> categoriesList = guild.getCategories(); //there has to be another way of doing this
-            if (categoriesList.stream().noneMatch(category -> category.getName().equals(catName))) {
-                guild.createCategory(catName).complete();
-            }
-            Category chnCat = guild.getCategoriesByName(catName, false).getFirst();
-            String[] channelNames = new String[bulkChannelAmount];
-            for(int i =0; i < bulkChannelAmount; i ++){
-                channelNames[i] = event.getOption("channel"+i).getAsString().toLowerCase();
-            }
-            EmbedBuilder eb = new EmbedBuilder();
-            String embedDescription ="";
-            int count =0;
-            List<TextChannel> textChannelList;
-            for(String channelName: channelNames){
-                textChannelList = chnCat.getTextChannels();
-                if(textChannelList.stream().noneMatch(textChannel -> textChannel.getName().equals(channelName))){
-                    channelExists =false;
-                    chnCat.createTextChannel(channelName).complete();
-                }
-                if(channelExists){
-                    embedDescription +="**"+channelName+" has not been created**\n" +
-                                    "Since the channel already exists, a new channel has not been created.\n";
-                    eb.setColor(Color.orange);
-                    count++;
-                }
-                channelExists = true;
-            }
-            if(count == bulkChannelAmount) eb.setTitle("**FATAL ERROR").setColor(Color.red);
-            else if (count==0) eb.setTitle("**Task completed without any errors**").setColor(Color.green);
-            embedDescription+= "Task complete.";
-            eb.setDescription(embedDescription);
-            event.getHook().sendMessageEmbeds(eb.build()).queue();
-        }
-    }
+//    public void bulkThread(SlashCommandInteractionEvent event){//this and bulkchannel could be merged with a generic method
+//        if(!event.getName().equals("numofthreads") && !event.getName().equals("bulkthread")) return;
+//        event.deferReply().queue();
+//        if(event.getName().equals("numofthreads")){
+//            threadNumberDefined = true;
+//            int bulkAmount = event.getOption("amount").getAsInt();
+//            bulk.setAmountOfThreads(bulkAmount);
+//
+//            if(bulkAmount > 15){
+//                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount was too much!**")
+//                        .setDescription("bulkhead is now available with 15 channel options.")
+//                        .setColor(Color.orange).build()).queue();
+//                bulk.setAmountOfThreads(15);
+//            }else{
+//                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
+//                        .setDescription("bulkhead is now available")
+//                        .setColor(Color.green).build()).queue();
+//            }
+//            bulkThreadAmount = bulk.getAmountOfThreads();
+//            bulk.bulkThreadCreator(bulkThreadAmount);
+//            event.getJDA().upsertCommand(bulk.bulkThreadCreation).complete();
+//        }
+//        if(!threadNumberDefined){
+//            event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
+//                    .setDescription("You have to set the amount of threads you want to create with /numofthreads" +
+//                            " first!")
+//                    .setColor(Color.red).build()).queue();
+//        }
+//
+//        if(event.getName().equals("bulkthread")) {
+//            Guild guild = event.getGuild();
+//            boolean threadExists = true;
+//            String channelForThreadsId = event.getOption("threadchannel").getAsChannel().getId();
+//
+//            //TODO standardize checks with methods
+//            boolean errorOccured = false;
+//            if (guild.getCategories().isEmpty()) {
+//                errorOccured = true;
+//            }
+//            List<TextChannel> textChannelList = guild.getTextChannels();
+//            if (textChannelList.stream().noneMatch(textChannel -> textChannel.getId().equals(channelForThreadsId))) {
+//                errorOccured = true;
+//            }
+//            if(errorOccured ) {
+//                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
+//                        .setDescription("Channel for thread creation does not exist!" +
+//                                " first!")
+//                        .setColor(Color.red).build()).queue();
+//                return;
+//            }
+//            TextChannel channelForThread = textChannelList.stream()
+//                    .filter(textChannel -> textChannel.getId().equals(channelForThreadsId))
+//                    .toList().getFirst();
+//
+//            String[] threadNames = new String[bulkThreadAmount];
+//            for(int i =0; i < bulkThreadAmount; i ++){
+//                threadNames[i] = event.getOption("thread" + i + "").getAsString();
+//            }
+//            EmbedBuilder eb = new EmbedBuilder();
+//            String embedDescription ="";
+//            int counter =0;
+//            List<ThreadChannel> threadChannelList;
+//            for(String threadNamez: threadNames){
+//                threadChannelList = channelForThread.getThreadChannels();
+//                if(threadChannelList.stream()
+//                        .noneMatch(threadChannel1 -> threadChannel1.getName().equals(threadNamez))){
+//                    threadExists =false;
+//                    channelForThread.createThreadChannel(threadNamez).complete();
+//                }
+//                if(threadExists){
+//                    embedDescription +="**"+threadNamez+" has not been created**\n" +
+//                            "Since the thread already exists, a new channel has not been created.\n";
+//                    eb.setColor(Color.orange);
+//                    counter++;
+//                }
+//                threadExists = true;
+//            }
+//            if(count == bulkThreadAmount) eb.setTitle("**FATAL ERROR").setColor(Color.red);
+//            else if (count==0) eb.setTitle("**Task completed without any errors**").setColor(Color.green);
+//            embedDescription+= "Task complete.";
+//            eb.setDescription(embedDescription);
+//            event.getHook().sendMessageEmbeds(eb.build()).queue();
+//        }
+//
+//    }
+//    public void bulkChannel(SlashCommandInteractionEvent event){
+//        if(!event.getName().equals("bulk") && !event.getName().equals("bulkcreate")) return;
+//        event.deferReply().queue();
+//        if(event.getName().equals("bulk")){
+//            bulkHasBeenSet = true;
+//            int bulkAmount = event.getOption("amount").getAsInt();
+//            if(bulkAmount > 15){
+//                event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount was too much!**")
+//                        .setDescription("/bulkcreate is now available with 15 channel options.")
+//                        .setColor(Color.orange).build()).queue();
+//                bulkAmount = 15;
+//            }else{
+//            event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**Bulk amount has been set**")
+//                    .setDescription("/bulkcreate is now available")
+//                    .setColor(Color.green).build()).queue();
+//            }
+//            bulk.bulkChannelCreator(bulkAmount);
+//            bulkChannelAmount = bulk.getBulkChannelAmount();
+//            event.getJDA().upsertCommand(bulk.bulkChannelCreation).complete();
+//        }
+//        if(!bulkHasBeenSet){
+//            event.getHook().sendMessageEmbeds(new EmbedBuilder().setTitle("**ERROR**")
+//                    .setDescription("You have to set the amount of channels you want to create with /bulk first!")
+//                    .setColor(Color.red).build()).queue();
+//        }
+//
+//        if(event.getName().equals("bulkcreate")) {
+//            Guild guild = event.getGuild();
+//            boolean channelExists = true;
+//            String catName = event.getOption("category").getAsString();
+//            if (guild.getCategories().isEmpty()) {
+//                guild.createCategory(catName).complete();
+//            }
+//            List<Category> categoriesList = guild.getCategories(); //there has to be another way of doing this
+//            if (categoriesList.stream().noneMatch(category -> category.getName().equals(catName))) {
+//                guild.createCategory(catName).complete();
+//            }
+//            Category chnCat = guild.getCategoriesByName(catName, false).getFirst();
+//            String[] channelNames = new String[bulkChannelAmount];
+//            for(int i =0; i < bulkChannelAmount; i ++){
+//                channelNames[i] = event.getOption("channel"+i).getAsString().toLowerCase();
+//            }
+//            EmbedBuilder eb = new EmbedBuilder();
+//            String embedDescription ="";
+//            int count =0;
+//            List<TextChannel> textChannelList;
+//            for(String channelName: channelNames){
+//                textChannelList = chnCat.getTextChannels();
+//                if(textChannelList.stream().noneMatch(textChannel -> textChannel.getName().equals(channelName))){
+//                    channelExists =false;
+//                    chnCat.createTextChannel(channelName).complete();
+//                }
+//                if(channelExists){
+//                    embedDescription +="**"+channelName+" has not been created**\n" +
+//                                    "Since the channel already exists, a new channel has not been created.\n";
+//                    eb.setColor(Color.orange);
+//                    count++;
+//                }
+//                channelExists = true;
+//            }
+//            if(count == bulkChannelAmount) eb.setTitle("**FATAL ERROR").setColor(Color.red);
+//            else if (count==0) eb.setTitle("**Task completed without any errors**").setColor(Color.green);
+//            embedDescription+= "Task complete.";
+//            eb.setDescription(embedDescription);
+//            event.getHook().sendMessageEmbeds(eb.build()).queue();
+//        }
+//    }
     public void channelNavigator(SlashCommandInteractionEvent event){
         //navigation Channel creator
         if(!event.getName().equals("navigation")) return;
@@ -430,5 +434,50 @@ public class EventListener extends ListenerAdapter {
         event.getHook().sendMessageEmbeds(new EmbedBuilder().setDescription("**Task Complete.**")
                 .setColor(Color.GREEN).build()).queue();
 
+    }
+
+    public void pdfActions(SlashCommandInteractionEvent event){
+        if(!event.getName().equals("embedpdf")) return;
+        event.deferReply(true).queue();
+        //Message.Attachment path = event.getOption("file").getAsAttachment();
+        int pageNum = event.getOption("page").getAsInt()-1;
+        File pdf = new File(System.getenv("PDF_PATH"));
+
+        try {
+            PDDocument document = PDDocument.load(pdf);
+            if(pageNum > document.getNumberOfPages()){
+                event.getHook().sendMessage("Error! Page number is not found in the given document!").queue();
+                return;
+            }
+            PDFRenderer renderer = new PDFRenderer(document);
+            BufferedImage bI =renderer.renderImage(pageNum);
+            String filePath = "PDFScreenShots";
+            Path path = Path.of(filePath);
+            if(!Files.exists(path)) Files.createDirectory(path);
+            filePath+= File.pathSeparatorChar+pageNum+"_Screenshot.png";
+            File outputPage = new File(filePath);
+            ImageIO.write(bI, "png",outputPage);
+            document.close();
+            File image = new File(filePath);
+            FileUpload fileUpload = FileUpload.fromData(image);
+            Files.delete(Path.of(filePath));
+            Message m = event.getHook().setEphemeral(true).sendFiles(fileUpload).complete();
+            String fileURL =m.getAttachments().getFirst().getUrl();
+            event.getHook().deleteMessageById(m.getId()).queue();
+            EmbedBuilder eb = new EmbedBuilder(titleDescEmbed(event));
+            eb.setImage(fileURL);
+            event.getHook().setEphemeral(false).sendMessageEmbeds(eb.build()).queue();
+        } catch (IOException e) {
+            event.getHook().setEphemeral(true).sendMessage("ERROR!").queue();
+            throw new RuntimeException("PDF file could not be loaded. pdfActions in EventListener");
+        }
+    }
+    public MessageEmbed titleDescEmbed(SlashCommandInteractionEvent event){
+        String title = event.getOption("title").getAsString();
+        title = "**"+title+"**";
+        String desc = event.getOption("desc").getAsString();
+        EmbedBuilder eb = new EmbedBuilder();
+        Color c = Color.getHSBColor((float)Math.random(),(float)Math.random(),(float)Math.random());
+        return eb.setTitle(title).setDescription(desc).setColor(c).build();
     }
 }
