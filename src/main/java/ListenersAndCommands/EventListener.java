@@ -45,22 +45,83 @@ public class EventListener extends ListenerAdapter {
         //TODO make message amount adjustable with an amount command and apply its content to retrievePast
         if(!event.getName().equals("log")) return;
         boolean eventComplete = false;
-        event.deferReply().queue();
+        event.deferReply(true).queue();
          List<Message> messages = event.getChannel().getHistory().retrievePast(100).complete();
         BufferedWriter writer = null;
         String embedLikeText="";
         File file = new File("MessageFiles"+File.separatorChar+"messageLogs .html");
         try {
             writer = new BufferedWriter(new FileWriter(file));
-            embedLikeText += "<!DOCTYPE html><html><body>" +
-                    "<h1>LOGS</h1>";
+            embedLikeText += "<!DOCTYPE html><html>" +
+                    "<head>" +
+                    "    <title>"+event.getChannel().getName().toUpperCase()+"</title>" +
+                    "    <style>" +
+                    "          body {" +
+                    "            background-color: #121212;" +
+                    "            color: #e0e0e0; /" +
+                    "            display: flex;" +
+                    "            flex-direction: column;" +
+                    "            align-items: center; /* Center the rectangles */" +
+                    "            padding: 20px;" +
+                    "        }" +
+                    "        .container {" +
+                    "            background-color: #BB86FC;" +
+                    "            border-radius: 20px;" +
+                    "            margin: 10px 0;" +
+                    "            color: #e0e0e0; " +
+                    "            font-family: Verdana, Geneva, Tahoma, sans-serif " +
+                    "            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); " +
+                    "            position: relative; " +
+                    "            padding-top: 40px; " +
+                    "            padding-bottom: 40px;" +
+                    "        }" +
+                    "        .toggle-button {" +
+                    "            position: absolute;" +
+                    "            top: 10px;" +
+                    "            left: 10px;" +
+                    "            cursor: pointer;" +
+                    "            padding: 5px 10px;" +
+                    "            background-color: #FFFAFF; " +
+                    "            color: white; " +
+                    "            border: none;" +
+                    "            border-radius: 5px; " +
+                    "        }" +
+                    "        .content {" +
+                    "            display: none; " +
+                    "            padding: 15px;" +
+                    "            text-align: center;" +
+                    "        }" +
+                    "        h2 {" +
+                    "            text-align: center;" +
+                    "            cursor: pointer;" +
+                    "            margin: 10px 0;" +
+                    "            color: #121212;" +
+                    "width: 100%;" +
+                    "        }" +
+                    "        p{" +
+                    "            font-size: 20px;" +
+                    "            color: #121212;"+
+                    "        }" +
+                    "        img {" +
+                    "            max-width: 100%; " +
+                    "            height: auto; " +
+                    "            border-radius: 10px; " +
+                    "            display: block; " +
+                    "            margin: 0 auto;" +
+                    "        }" +
+                    "    </style>" +
+                    "</head>" +
+                    "<body>" +
+                    "<h1>"+event.getChannel().getName().toUpperCase()+"</h1>";
             for (Message message : messages) {
                 if(message.getContentDisplay().startsWith("/")) continue;
-                embedLikeText += "<div style=\"border: 2px solid black; padding: 10px; display: grid; grid-template-columns: auto auto;\">"
-                        +"<small><p>**Author:** \n" + message.getAuthor().getName().toUpperCase() + "\n</p></small>" ;
+                embedLikeText+= "<div class=\"container\">" +
+                        "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\">Toggle</button>";
+                //embedLikeText += "<div style=\"border: 2px solid black; padding: 10px; display: grid; grid-template-columns: auto auto;\">";
+                       // +"<small><p>**Author:** \n" + message.getAuthor().getName().toUpperCase() + "\n</p></small>" ;
                 if(!message.getEmbeds().isEmpty()){
-                    embedLikeText+="<p> " + message.getEmbeds().getFirst().getTitle()+"\n"+
-                            "" +message.getEmbeds().getFirst().getDescription()+"\n</p>";
+                    embedLikeText+="<h2>"+message.getEmbeds().getFirst().getTitle()+"</h2>"+
+                             "<div class=\"content\"><p>"+message.getEmbeds().getFirst().getDescription()+"\n</p>";
                     if(message.getEmbeds().getFirst().getImage() !=null){
                         embedLikeText+=   "<img src=\""+message.getEmbeds().getFirst()
                                 .getImage().getUrl() +
@@ -73,7 +134,8 @@ public class EventListener extends ListenerAdapter {
                                 "</iframe>";
                     }
                 }else{
-                    embedLikeText +="<p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
+                    embedLikeText+= "<h2> **User Message** </h2>";
+                    embedLikeText +="<div class=\"content\"><p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
                     if(message.getContentDisplay().contains("http") ){
                         String siteLink =extractLink(message.getContentDisplay());
                         embedLikeText =embedLikeText.replace(siteLink, "<a href=\""+siteLink+"\"> **Link**</a>");
@@ -89,10 +151,15 @@ public class EventListener extends ListenerAdapter {
 
                 }
 
-                embedLikeText+="</div>";
+                embedLikeText+="</div></div>";
                         //"Timestamp: " + message.getTimeCreated().
             }
-            embedLikeText+="</body> </html>";
+            embedLikeText+="<script>" +
+                    "    function toggleContent(container) {" +
+                    "        var content = container.querySelector(\".content\");" +
+                    "        content.style.display = content.style.display === \"block\" ? \"none\" : \"block\";" +
+                    "    }" +
+                    "</script></body> </html>";
             embedLikeText =embedLikeText.replace("**", "<b>");
             embedLikeText = embedLikeText.replace("\n", "<br>");
 
