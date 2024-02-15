@@ -217,10 +217,13 @@ public class EventListener extends ListenerAdapter {
         String siteLink =  extractLink(text);
         //turn youtube links to youtube embed links
         siteLink = "<iframe src=\""+siteLink +"\"";
-        if(siteLink.contains("youtu.be/")) {
-            if (siteLink.contains("watch?v="))
-                siteLink = siteLink.replace("watch?v=", "embed/");
-            else siteLink = siteLink.replace("youtu.be/", "youtube.com/embed/");
+        if(siteLink.contains("youtu.be/")|| siteLink.contains("youtube.com")) {
+            if (siteLink.contains("watch?v=")) {
+                siteLink = siteLink.replace("watch?v=", "");
+            }
+            siteLink = siteLink.replace("youtube.com/", "youtube.com/embed/");
+            siteLink = siteLink.replace("youtu.be/", "youtube.com/embed/");
+
             siteLink+= "width=\"560\" height=\"315\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay" +
                     "; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen>";
         }else siteLink = siteLink +"width=\"600\" height=\"400\">";
