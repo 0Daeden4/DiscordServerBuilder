@@ -12,7 +12,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import javax.imageio.ImageIO;
@@ -51,6 +50,10 @@ public class EventListener extends ListenerAdapter {
     public void log(SlashCommandInteractionEvent event){
         //TODO add thread crawl
         //TODO make message amount adjustable with an amount command and apply its content to retrievePast
+        //TODO categorize content (change structure to first create an array of messages and look for specific words
+        // them to categorize them) this can be done by firs extracting the html creation to a method which needs
+        // div[] as a parameter. This parameter needs to be created as an object which takes Title, Description,
+        // Image and Link as parameters in its constructor.
         if(!event.getName().equals("log")) return;
         boolean eventComplete = false;
         event.deferReply(true).queue();
@@ -58,7 +61,7 @@ public class EventListener extends ListenerAdapter {
         BufferedWriter writer = null;
         String embedLikeText="";
         File file = new File("MessageFiles"+File.separatorChar+"messageLogs .html");
-        try {
+        try { //Known issue: Links containing ? may cause an error by <a href
             writer = new BufferedWriter(new FileWriter(file));
             embedLikeText += "<!DOCTYPE html><html>" +
                     "<head>" +
@@ -85,14 +88,14 @@ public class EventListener extends ListenerAdapter {
                     "        }" +
                     "        .toggle-button {" +
                     "            position: absolute;" +
-                    "            top: 10px;" +
+                    "            top: 17.5px;" +
                     "            left: 10px;" +
                     "            cursor: pointer;" +
-                    "            padding: 5px 10px;" +
-                    "            background-color: #FFFAFF; " +
-                    "            color: white; " +
+                    "            padding: 40px 40px;" +
+                    "            background-color: #121212; " +
+                    "            color: #FFFAFF; " +
                     "            border: none;" +
-                    "            border-radius: 5px; " +
+                    "            border-radius: 20px; " +
                     "        }" +
                     "        .content {" +
                     "            display: none; " +
@@ -122,9 +125,9 @@ public class EventListener extends ListenerAdapter {
                     "<body>" +
                     "<h1>"+event.getChannel().getName().toUpperCase()+"</h1>";
             for (Message message : messages) {
-                if(message.getContentDisplay().startsWith("/")) continue;
+                if(message.getContentDisplay().startsWith("/")|| message.getType().isSystem()) continue;
                 embedLikeText+= "<div class=\"container\">" +
-                        "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\">Toggle</button>";
+                        "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\">**o**</button>";
                 //embedLikeText += "<div style=\"border: 2px solid black; padding: 10px; display: grid; grid-template-columns: auto auto;\">";
                        // +"<small><p>**Author:** \n" + message.getAuthor().getName().toUpperCase() + "\n</p></small>" ;
                 if(!message.getEmbeds().isEmpty()){
@@ -138,18 +141,15 @@ public class EventListener extends ListenerAdapter {
                     if(message.getEmbeds().getFirst().getDescription().contains("http") ){
                         String siteLink =extractLink(message.getEmbeds().getFirst().getDescription());
                         embedLikeText =embedLikeText.replace(siteLink, "<a href=\""+siteLink+"\"> **Link**</a>");
-                        embedLikeText += "<iframe src=\""+siteLink+"\" width=\"600\" height=\"400\">" +
-                                "</iframe>";
+                        embedLikeText += extractIframe(siteLink);
                     }
                 }else{
                     embedLikeText+= "<h2> **User Message** </h2>";
                     embedLikeText +="<div class=\"content\"><p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
-                    if(message.getContentDisplay().contains("http") ){
+                    if(message.getContentDisplay().contains("http") ){ //duplicate from the code above
                         String siteLink =extractLink(message.getContentDisplay());
-                        embedLikeText =embedLikeText.replace(siteLink, "<a href=\""+siteLink+"\"> **Link**</a>");
-                        embedLikeText += "<iframe src=\""+siteLink+"\" width=\"600\" height=\"400\">" +
-                                "</iframe>";
-
+                        embedLikeText = embedLikeText.replace(siteLink, "<a href=\"" + siteLink + "\"> **Link**</a>");
+                        embedLikeText += extractIframe(siteLink);
                     }
                     if( !message.getAttachments().isEmpty()){
                         String attachmentURL =message.getAttachments().getFirst().getUrl();
@@ -212,7 +212,20 @@ public class EventListener extends ListenerAdapter {
         } else {
             return "Invalid Url.";
         }
-
+    }
+    public String extractIframe(String text){
+        String siteLink =  extractLink(text);
+        //turn youtube links to youtube embed links
+        siteLink = "<iframe src=\""+siteLink +"\"";
+        if(siteLink.contains("youtu.be/")) {
+            if (siteLink.contains("watch?v="))
+                siteLink = siteLink.replace("watch?v=", "embed/");
+            else siteLink = siteLink.replace("youtu.be/", "youtube.com/embed/");
+            siteLink+= "width=\"560\" height=\"315\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay" +
+                    "; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen>";
+        }else siteLink = siteLink +"width=\"600\" height=\"400\">";
+        siteLink += "</iframe>";
+        return siteLink;
     }
     public void embeds(SlashCommandInteractionEvent event){
         if(!event.getName().equals("embed")) return;
