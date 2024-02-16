@@ -3,9 +3,7 @@ package HTMLBuilderAndMessageParser;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageReaction;
-import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,6 +20,8 @@ public class Div implements Comparator {
     private int reactionCount;
     private Message m;
     private Emoji question = Emoji.fromUnicode("U+2753");
+    private Emoji extreme = Emoji.fromUnicode("U+203C");
+    private Emoji ignore = Emoji.fromUnicode("U+274C");
     private Type type;
 
     @Override
@@ -32,6 +32,8 @@ public class Div implements Comparator {
     public enum Type{
         QUESTION,
         IMPORTANT,
+        EXTREME,
+        IGNORE,
         NORMAL
     }
     public Div(Message m){
@@ -39,42 +41,52 @@ public class Div implements Comparator {
         String typeIndicator="";
         List<MessageReaction> mr = m.getReactions();
         reactionCount = mr.size();
-        if(!mr.isEmpty() && containsReaction(question)) {
-            type =Type.QUESTION;
-            typeIndicator += "{?}";
-        }
-        else if(reactionCount>=1) {
-            type = Type.IMPORTANT;
-            for(int i =0; i<reactionCount; i++){
-                typeIndicator+= "!";
+        if(!mr.isEmpty()) {
+            if (containsReaction(question)) {
+                type = Type.QUESTION;
+                typeIndicator += "{?}";
+                reactionCount = 1000;
+            } else if (containsReaction(ignore)) {
+                type = Type.IGNORE;
+                reactionCount = 0;
+            } else if (reactionCount >= 1) {
+                type = Type.IMPORTANT;
+                typeIndicator += "!!";
+            } else if (containsReaction(extreme)) {
+                type = Type.EXTREME;
+                typeIndicator += "@REALLY IMPORTANT!";
+                reactionCount = 999;
             }
         }
         else {
             type = Type.NORMAL;
         }
-
-        if(!m.getEmbeds().isEmpty()){
-            MessageEmbed embed = m.getEmbeds().getFirst();
-            isEmbed= true;
-            title = setTitle(embed.getTitle() +" "+typeIndicator);
-            desc =setDesc(embed.getDescription());
-        }else{
-            isEmbed = false;
-            title = setTitle(m.getAuthor().getName()+" "+ typeIndicator);
-            desc = setDesc(m.getContentDisplay());
+        if(type == Type.IGNORE){
+            div ="";
         }
-        img =getImg();
-        link =getLinks();
-        String tempDesc;
-        tempDesc = desc;
-        setAHref();
-        desc = desc.replace("\n", "<br>");
+        else {
+            if(reactionCount>=1) typeIndicator += " Importance Level: "+reactionCount;
+            if (!m.getEmbeds().isEmpty()) {
+                MessageEmbed embed = m.getEmbeds().getFirst();
+                isEmbed = true;
+                title = setTitle(embed.getTitle() + " " + typeIndicator);
+                desc = setDesc(embed.getDescription());
+            } else {
+                isEmbed = false;
+                title = setTitle(m.getAuthor().getName() + " " + typeIndicator);
+                desc = setDesc(m.getContentDisplay());
+            }
+            img = getImg();
+            link = getLinks();
+            String tempDesc;
+            tempDesc = desc;
+            setAHref();
+            //desc = desc.replace("\n", "<br>");
 
-        div= "<div class=\"container\">" +
-                "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\"><b>o</b></button>"
-                +title+desc+img+"<br>"+extractIframe(tempDesc)+"</div></div>";
-        div = replaceEverySecondOccurrence(div, "**", "</b>");
-        div =div.replace("**", "<b>");
+            div = "<div class=\"container\">" +
+                    "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\"><b>o</b></button>"
+                    + title + desc + img + "<br>" + extractIframe(tempDesc) + "</div></div>\r\n";
+        }
     }
     private String replaceEverySecondOccurrence(String text, String search, String replacement) {
         int index = -1;
@@ -120,9 +132,17 @@ public class Div implements Comparator {
         }
     }
     private String setTitle(String s){
+        s = replaceEverySecondOccurrence(s, "**", "</b>");
+        s = s.replace("**", "<b>");
+        s = replaceEverySecondOccurrence(s,"*","</i>" );
+        s = s.replace("*", "</i>");
         return "<h2>"+s+"</h2>";
     }
     private String setDesc(String s){
+        s = replaceEverySecondOccurrence(s, "**", "</b>");
+        s = s.replace("**", "<b>");
+        s = replaceEverySecondOccurrence(s,"*","</i>" );
+        s = s.replace("*", "</i>");
         return "<div class=\"content\"><p>" +s+" <br></p>";
     }
     private boolean isEmbed(){

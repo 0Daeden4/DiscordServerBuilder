@@ -397,7 +397,7 @@ public class EventListener extends ListenerAdapter {
                     "            background-color: #121212; " +
                     "            color: #FFFAFF; " +
                     "            border: none;" +
-                    "            border-radius: 20px; " +
+                    "            border-radius: 10px; " +
                     "        }" +
                     "        .content {" +
                     "            display: none; " +
@@ -430,7 +430,6 @@ public class EventListener extends ListenerAdapter {
             for (Message message : messages) {
                 divs.add(new Div(message));
             }
-            divs.stream().filter(d-> d.isOfType(Div.Type.QUESTION)).forEach(d->d.setImportance(100000));
             divs.sort((o1, o2) -> o1.compare(o1,o2));
             for(Div div: divs){
                 embedLikeText+= div.toString();
