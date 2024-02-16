@@ -55,7 +55,7 @@ public class EventListener extends ListenerAdapter {
         event.deferReply(true).queue();
         List<Message> messages = event.getGuildChannel().getHistory().retrievePast(100).complete();
         messages = messages.stream().filter(message -> !message.getType().isSystem())
-                .filter(message -> message.getContentRaw().startsWith("/")).collect(Collectors.toList());
+                .filter(message -> !message.getContentRaw().startsWith("/")).collect(Collectors.toList());
         event.getHook().sendFiles(htmlCreator(event, messages)).queue();
     }
     public void logCategory(SlashCommandInteractionEvent event){

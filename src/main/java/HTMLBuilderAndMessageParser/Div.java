@@ -19,9 +19,9 @@ public class Div implements Comparator {
     private String div;
     private int reactionCount;
     private Message m;
-    private Emoji question = Emoji.fromUnicode("U+2753");
-    private Emoji extreme = Emoji.fromUnicode("U+203C");
-    private Emoji ignore = Emoji.fromUnicode("U+274C");
+    private Emoji question = Emoji.fromUnicode("U+2753"); //red question mark
+    private Emoji reallyImportant = Emoji.fromUnicode("\u203c\ufe0f"); //double exclamation mark
+    private Emoji ignore = Emoji.fromUnicode("U+274C"); //red cross mark
     private Type type;
 
     @Override
@@ -32,7 +32,7 @@ public class Div implements Comparator {
     public enum Type{
         QUESTION,
         IMPORTANT,
-        EXTREME,
+        REALLY_IMPORTANT,
         IGNORE,
         NORMAL
     }
@@ -44,18 +44,15 @@ public class Div implements Comparator {
         if(!mr.isEmpty()) {
             if (containsReaction(question)) {
                 type = Type.QUESTION;
-                typeIndicator += "{?}";
                 reactionCount = 1000;
             } else if (containsReaction(ignore)) {
                 type = Type.IGNORE;
                 reactionCount = 0;
+            } else if (containsReaction(reallyImportant)) {
+                type = Type.REALLY_IMPORTANT;
+                reactionCount = 999;
             } else if (reactionCount >= 1) {
                 type = Type.IMPORTANT;
-                typeIndicator += "!!";
-            } else if (containsReaction(extreme)) {
-                type = Type.EXTREME;
-                typeIndicator += "@REALLY IMPORTANT!";
-                reactionCount = 999;
             }
         }
         else {
@@ -65,15 +62,15 @@ public class Div implements Comparator {
             div ="";
         }
         else {
-            if(reactionCount>=1) typeIndicator += " Importance Level: "+reactionCount;
+            typeIndicator += isOfType(Type.NORMAL)?"":" "+type.toString().toLowerCase();
             if (!m.getEmbeds().isEmpty()) {
                 MessageEmbed embed = m.getEmbeds().getFirst();
                 isEmbed = true;
-                title = setTitle(embed.getTitle() + " " + typeIndicator);
+                title = setTitle(embed.getTitle()+"<i>"+typeIndicator+"</i>");
                 desc = setDesc(embed.getDescription());
             } else {
                 isEmbed = false;
-                title = setTitle(m.getAuthor().getName() + " " + typeIndicator);
+                title = setTitle(m.getAuthor().getName()+"<i>"+typeIndicator+"</i>");
                 desc = setDesc(m.getContentDisplay());
             }
             img = getImg();
