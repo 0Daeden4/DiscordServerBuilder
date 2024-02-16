@@ -88,8 +88,12 @@ public class SlashCommands {
 //                                .addOption(OptionType.ATTACHMENT, "File","Your PDF File.", true)
                         .addOptions(titleDesc)
                         .addOption(OptionType.INTEGER, "page", "Number of the page",true);
+        CommandData logCategory =
+                Commands.slash("logfrom", "Logs a Category.")
+                                .addOption(OptionType.CHANNEL, "logcat", "Logs this category."
+                                        , true);
 
-        bot.updateCommands().addCommands(navigation, embedSender, log, embedPdf).complete();
+        bot.updateCommands().addCommands(navigation, embedSender, log, logCategory, embedPdf).complete();
     }
 
     //out of commission

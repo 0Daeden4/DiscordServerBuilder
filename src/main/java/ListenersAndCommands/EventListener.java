@@ -1,5 +1,6 @@
 package ListenersAndCommands;
 
+import HTMLBuilderAndMessageParser.Div;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -9,7 +10,6 @@ import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -20,9 +20,8 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -46,190 +45,51 @@ public class EventListener extends ListenerAdapter {
         embeds(event);
         log(event);
         pdfActions(event);
+        logCategory(event);
     }
     public void log(SlashCommandInteractionEvent event){
-        //TODO add thread crawl
         //TODO make message amount adjustable with an amount command and apply its content to retrievePast
         //TODO categorize content (change structure to first create an array of messages and look for specific words
-        // them to categorize them) this can be done by firs extracting the html creation to a method which needs
-        // div[] as a parameter. This parameter needs to be created as an object which takes Title, Description,
-        // Image and Link as parameters in its constructor.
+        // them to categorize them)
         if(!event.getName().equals("log")) return;
-        boolean eventComplete = false;
         event.deferReply(true).queue();
-         List<Message> messages = event.getChannel().getHistory().retrievePast(100).complete();
-        BufferedWriter writer = null;
-        String embedLikeText="";
-        File file = new File("MessageFiles"+File.separatorChar+"messageLogs .html");
-        try { //Known issue: Links containing ? may cause an error by <a href
-            writer = new BufferedWriter(new FileWriter(file));
-            embedLikeText += "<!DOCTYPE html><html>" +
-                    "<head>" +
-                    "    <title>"+event.getChannel().getName().toUpperCase()+"</title>" +
-                    "    <style>" +
-                    "          body {" +
-                    "            background-color: #121212;" +
-                    "            color: #e0e0e0; /" +
-                    "            display: flex;" +
-                    "            flex-direction: column;" +
-                    "            align-items: center; /* Center the rectangles */" +
-                    "            padding: 20px;" +
-                    "        }" +
-                    "        .container {" +
-                    "            background-color: #BB86FC;" +
-                    "            border-radius: 20px;" +
-                    "            margin: 10px 0;" +
-                    "            color: #e0e0e0; " +
-                    "            font-family: Verdana, Geneva, Tahoma, sans-serif " +
-                    "            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); " +
-                    "            position: relative; " +
-                    "            padding-top: 40px; " +
-                    "            padding-bottom: 40px;" +
-                    "        }" +
-                    "        .toggle-button {" +
-                    "            position: absolute;" +
-                    "            top: 17.5px;" +
-                    "            left: 10px;" +
-                    "            cursor: pointer;" +
-                    "            padding: 40px 40px;" +
-                    "            background-color: #121212; " +
-                    "            color: #FFFAFF; " +
-                    "            border: none;" +
-                    "            border-radius: 20px; " +
-                    "        }" +
-                    "        .content {" +
-                    "            display: none; " +
-                    "            padding: 15px;" +
-                    "            text-align: center;" +
-                    "        }" +
-                    "        h2 {" +
-                    "            text-align: center;" +
-                    "            cursor: pointer;" +
-                    "            margin: 10px 0;" +
-                    "            color: #121212;" +
-                    "width: 100%;" +
-                    "        }" +
-                    "        p{" +
-                    "            font-size: 20px;" +
-                    "            color: #121212;"+
-                    "        }" +
-                    "        img {" +
-                    "            max-width: 100%; " +
-                    "            height: auto; " +
-                    "            border-radius: 10px; " +
-                    "            display: block; " +
-                    "            margin: 0 auto;" +
-                    "        }" +
-                    "    </style>" +
-                    "</head>" +
-                    "<body>" +
-                    "<h1>"+event.getChannel().getName().toUpperCase()+"</h1>";
-            for (Message message : messages) {
-                if(message.getContentDisplay().startsWith("/")|| message.getType().isSystem()) continue;
-                embedLikeText+= "<div class=\"container\">" +
-                        "<button class=\"toggle-button\" onclick=\"toggleContent(this.parentElement)\">**o**</button>";
-                //embedLikeText += "<div style=\"border: 2px solid black; padding: 10px; display: grid; grid-template-columns: auto auto;\">";
-                       // +"<small><p>**Author:** \n" + message.getAuthor().getName().toUpperCase() + "\n</p></small>" ;
-                if(!message.getEmbeds().isEmpty()){
-                    embedLikeText+="<h2>"+message.getEmbeds().getFirst().getTitle()+"</h2>"+
-                             "<div class=\"content\"><p>"+message.getEmbeds().getFirst().getDescription()+"\n</p>";
-                    if(message.getEmbeds().getFirst().getImage() !=null){
-                        embedLikeText+=   "<img src=\""+message.getEmbeds().getFirst()
-                                .getImage().getUrl() +
-                            "\" alt=\"image\" style=\"width:40%; height:auto; overflow: auto;\"> " ;
-                    }
-                    if(message.getEmbeds().getFirst().getDescription().contains("http") ){
-                        String siteLink =extractLink(message.getEmbeds().getFirst().getDescription());
-                        embedLikeText =embedLikeText.replace(siteLink, "<a href=\""+siteLink+"\"> **Link**</a>");
-                        embedLikeText += extractIframe(siteLink);
-                    }
-                }else{
-                    embedLikeText+= "<h2> **User Message** </h2>";
-                    embedLikeText +="<div class=\"content\"><p>**Content:** \n" + message.getContentDisplay() + "\n </p>";
-                    if(message.getContentDisplay().contains("http") ){ //duplicate from the code above
-                        String siteLink =extractLink(message.getContentDisplay());
-                        embedLikeText = embedLikeText.replace(siteLink, "<a href=\"" + siteLink + "\"> **Link**</a>");
-                        embedLikeText += extractIframe(siteLink);
-                    }
-                    if( !message.getAttachments().isEmpty()){
-                        String attachmentURL =message.getAttachments().getFirst().getUrl();
-                        embedLikeText+=   "<img src=\""+attachmentURL +
-                                "\" alt=\"image\" style=\"width:40%; height:auto; overflow: auto;\"> " ;
-                    }
-
+        List<Message> messages = event.getGuildChannel().getHistory().retrievePast(100).complete();
+        messages = messages.stream().filter(message -> !message.getType().isSystem())
+                .filter(message -> message.getContentRaw().startsWith("/")).collect(Collectors.toList());
+        event.getHook().sendFiles(htmlCreator(event, messages)).queue();
+    }
+    public void logCategory(SlashCommandInteractionEvent event){
+        if(!event.getName().equals("logfrom")) return;
+        event.deferReply(true).queue();
+        if(event.getOption("logcat").getAsChannel().asCategory().equals(null)){
+            event.getHook().sendMessage("This isn't a Category!")
+                    .setEphemeral(true).queue();
+            return;
+        }
+        Category category =event.getGuild().getCategoryById(event.getOption("logcat").getAsChannel().getId());
+        List<TextChannel> textChannels = category.getTextChannels();
+        if(textChannels.isEmpty()) {
+            event.getHook().sendMessage("No Channels exist in the named Category!")
+                    .setEphemeral(true).queue();
+            return;
+        }
+        ArrayList<Message> messages = new ArrayList<>();
+        for(TextChannel t : textChannels){
+            messages.addAll(t.getHistory().retrievePast(100).complete());
+            List<ThreadChannel> threads =t.getThreadChannels();
+            if(!threads.isEmpty()) {
+                for (ThreadChannel trc : threads) {
+                    messages.addAll(trc.getHistory().retrievePast(100).complete());
                 }
-
-                embedLikeText+="</div></div>";
-                        //"Timestamp: " + message.getTimeCreated().
-            }
-            embedLikeText+="<script>" +
-                    "    function toggleContent(container) {" +
-                    "        var content = container.querySelector(\".content\");" +
-                    "        content.style.display = content.style.display === \"block\" ? \"none\" : \"block\";" +
-                    "    }" +
-                    "</script></body> </html>";
-            embedLikeText =embedLikeText.replace("**", "<b>");
-            embedLikeText = embedLikeText.replace("\n", "<br>");
-
-            embedLikeText = replaceEverySecondOccurrence(embedLikeText, "<b>", "</b>");
-            writer.write(embedLikeText);
-            event.getHook().sendFiles(FileUpload.fromData(file)).queue();
-            eventComplete =true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            event.getHook().sendMessage("error").queue();
-        }finally {
-            try {
-                writer.close();
-                file.delete();
-            } catch (IOException e) {
-                throw new RuntimeException("Writer could not be closed.");
             }
         }
-        if(!eventComplete) event.getHook().sendMessage("Failiure.").queue();
+        messages = (ArrayList<Message>) messages.stream().filter(message -> !message.getType().isSystem())
+                .filter(message -> !message.getContentRaw().startsWith("/")).collect(Collectors.toList());
+        event.getHook().sendFiles(htmlCreator(event, messages)).queue();
     }
-    private String replaceEverySecondOccurrence(String text, String search, String replacement) {
-        int index = -1;
-        boolean replace = false;
-        StringBuilder sb = new StringBuilder(text);
-        while ((index = sb.indexOf(search, index + 1)) != -1) {
-            if (replace) {
-                sb.replace(index, index + search.length(), replacement);
-                index += replacement.length() - search.length();
-            }
-            replace = !replace;
-        }
 
-        return sb.toString();
-    }
-    private String extractLink(String text){
-        String urlPattern = "(http://www\\.|https://www\\.|http://|https://)[a-zA-Z0-9\\-\\.]+\\." +
-                "[a-zA-Z]{2,5}(:[0-9]{1,5})?(/\\S*)?";
-        Pattern pattern = Pattern.compile(urlPattern);
-        Matcher matcher = pattern.matcher(text);
-        if (matcher.find()) {
-            return matcher.group();
-        } else {
-            return "Invalid Url.";
-        }
-    }
-    public String extractIframe(String text){
-        String siteLink =  extractLink(text);
-        //turn youtube links to youtube embed links
-        siteLink = "<iframe src=\""+siteLink +"\"";
-        if(siteLink.contains("youtu.be/")|| siteLink.contains("youtube.com")) {
-            if (siteLink.contains("watch?v=")) {
-                siteLink = siteLink.replace("watch?v=", "");
-            }
-            siteLink = siteLink.replace("youtube.com/", "youtube.com/embed/");
-            siteLink = siteLink.replace("youtu.be/", "youtube.com/embed/");
 
-            siteLink+= "width=\"560\" height=\"315\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay" +
-                    "; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen>";
-        }else siteLink = siteLink +"width=\"600\" height=\"400\">";
-        siteLink += "</iframe>";
-        return siteLink;
-    }
+
     public void embeds(SlashCommandInteractionEvent event){
         if(!event.getName().equals("embed")) return;
         event.deferReply().queue();
@@ -495,5 +355,112 @@ public class EventListener extends ListenerAdapter {
         EmbedBuilder eb = new EmbedBuilder();
         Color c = Color.getHSBColor((float)Math.random(),(float)Math.random(),(float)Math.random());
         return eb.setTitle(title).setDescription(desc).setColor(c).build();
+    }
+
+    public FileUpload htmlCreator(SlashCommandInteractionEvent event, List<Message> messages){
+        boolean eventComplete = false;
+        BufferedWriter writer = null;
+        String embedLikeText="";
+        FileUpload fu = null;
+        File file = new File("MessageFiles"+File.separatorChar+event.getChannel().getName()+".html");
+        try { //Known issue: Links containing ? may cause an error by <a href
+            writer = new BufferedWriter(new FileWriter(file));
+            embedLikeText += "<!DOCTYPE html><html>" +
+                    "<head>" +
+                    "    <title>"+event.getChannel().getName().toUpperCase()+"</title>" +
+                    "    <style>" +
+                    "          body {" +
+                    "            background-color: #121212;" +
+                    "            color: #e0e0e0; /" +
+                    "            display: flex;" +
+                    "            flex-direction: column;" +
+                    "            align-items: center; /* Center the rectangles */" +
+                    "            padding: 20px;" +
+                    "        }" +
+                    "        .container {" +
+                    "            background-color: #BB86FC;" +
+                    "            border-radius: 20px;" +
+                    "            margin: 10px 0;" +
+                    "            color: #e0e0e0; " +
+                    "            font-family: Verdana, Geneva, Tahoma, sans-serif " +
+                    "            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); " +
+                    "            position: relative; " +
+                    "            padding-top: 40px; " +
+                    "            padding-bottom: 40px;" +
+                    "        }" +
+                    "        .toggle-button {" +
+                    "            position: absolute;" +
+                    "            top: 17.5px;" +
+                    "            left: 10px;" +
+                    "            cursor: pointer;" +
+                    "            padding: 40px 40px;" +
+                    "            background-color: #121212; " +
+                    "            color: #FFFAFF; " +
+                    "            border: none;" +
+                    "            border-radius: 20px; " +
+                    "        }" +
+                    "        .content {" +
+                    "            display: none; " +
+                    "            padding: 15px;" +
+                    "            text-align: center;" +
+                    "        }" +
+                    "        h2 {" +
+                    "            text-align: center;" +
+                    "            cursor: pointer;" +
+                    "            margin: 10px 0;" +
+                    "            color: #121212;" +
+                    "width: 100%;" +
+                    "        }" +
+                    "        p{" +
+                    "            font-size: 20px;" +
+                    "            color: #121212;"+
+                    "        }" +
+                    "        img {" +
+                    "            max-width: 100%; " +
+                    "            height: auto; " +
+                    "            border-radius: 10px; " +
+                    "            display: block; " +
+                    "            margin: 0 auto;" +
+                    "        }" +
+                    "    </style>" +
+                    "</head>" +
+                    "<body>" +
+                    "<h1>"+event.getChannel().getName().toUpperCase()+"</h1>";
+            ArrayList<Div> divs = new ArrayList<>();
+            for (Message message : messages) {
+                divs.add(new Div(message));
+            }
+            divs.stream().filter(d-> d.isOfType(Div.Type.QUESTION)).forEach(d->d.setImportance(100000));
+            divs.sort((o1, o2) -> o1.compare(o1,o2));
+            for(Div div: divs){
+                embedLikeText+= div.toString();
+            }
+            embedLikeText+="<script>" +
+                    "    function toggleContent(container) {" +
+                    "        var content = container.querySelector(\".content\");" +
+                    "        content.style.display = content.style.display === \"block\" ? \"none\" : \"block\";" +
+                    "    }" +
+                    "</script></body> </html>";
+
+
+            writer.write(embedLikeText);
+            fu = FileUpload.fromData(file);
+            eventComplete =true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            event.getHook().sendMessage("error").queue();
+        }finally {
+            try {
+                writer.close();
+                file.delete();
+            } catch (IOException e) {
+                throw new RuntimeException("Writer could not be closed.");
+            }
+        }
+        if(!eventComplete) {
+            event.getHook().sendMessage("Failiure.").queue();
+            return fu;
+        }
+        return fu;
     }
 }
