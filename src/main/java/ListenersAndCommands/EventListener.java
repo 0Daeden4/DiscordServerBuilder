@@ -7,7 +7,9 @@ import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -51,6 +53,9 @@ public class EventListener extends ListenerAdapter {
         //TODO make message amount adjustable with an amount command and apply its content to retrievePast
         //TODO categorize content (change structure to first create an array of messages and look for specific words
         // them to categorize them)
+        //TODO display Category -> Channel -> Thread names above the title. If the importances of the divs are the same
+        // they should be ordered according to their channel codes. A static hashmap can be used to store the divs
+        // that are in the same channel as values in a key representing the channel and a super div could be created.
         if(!event.getName().equals("log")) return;
         event.deferReply(true).queue();
         List<Message> messages = event.getGuildChannel().getHistory().retrievePast(100).complete();
@@ -61,9 +66,28 @@ public class EventListener extends ListenerAdapter {
     public void logCategory(SlashCommandInteractionEvent event){
         if(!event.getName().equals("logfrom")) return;
         event.deferReply(true).queue();
-        if(event.getOption("logcat").getAsChannel().asCategory().equals(null)){
-            event.getHook().sendMessage("This isn't a Category!")
-                    .setEphemeral(true).queue();
+        //!event.getOption("logcat").getAsChannel().equals(Category.class)
+        if(event.getOption("logcat").getAsChannel().getType() != ChannelType.CATEGORY){
+            if(event.getOption("logcat").getAsChannel().getType().isAudio()){
+                event.getHook().sendMessage("This isn't a Category or a Text Channel!")
+                        .setEphemeral(true).queue();
+                return;
+            }
+            List<Message> messages;
+            if ( event.getOption("logcat").getAsChannel().getType().isThread()){
+                ThreadChannel tc = event.getOption("logcat").getAsChannel().asThreadChannel();
+                messages = tc.getHistory().retrievePast(100).complete();
+            }else{
+                TextChannel textChannel = event.getOption("logcat").getAsChannel().asTextChannel();
+                messages = textChannel.getHistory().retrievePast(100).complete();
+            }
+            if(messages.isEmpty()){
+                event.getHook().sendMessage("The Channel has no messages!").setEphemeral(true).queue();
+                return;
+            }
+            messages = (ArrayList<Message>) messages.stream().filter(message -> !message.getType().isSystem())
+                    .filter(message -> !message.getContentRaw().startsWith("/")).collect(Collectors.toList());
+            event.getHook().sendFiles(htmlCreator(event, messages)).queue();
             return;
         }
         Category category =event.getGuild().getCategoryById(event.getOption("logcat").getAsChannel().getId());

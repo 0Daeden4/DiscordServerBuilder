@@ -131,15 +131,11 @@ public class Div implements Comparator {
     private String setTitle(String s){
         s = replaceEverySecondOccurrence(s, "**", "</b>");
         s = s.replace("**", "<b>");
-        s = replaceEverySecondOccurrence(s,"*","</i>" );
-        s = s.replace("*", "</i>");
         return "<h2>"+s+"</h2>";
     }
     private String setDesc(String s){
         s = replaceEverySecondOccurrence(s, "**", "</b>");
         s = s.replace("**", "<b>");
-        s = replaceEverySecondOccurrence(s,"*","</i>" );
-        s = s.replace("*", "</i>");
         return "<div class=\"content\"><p>" +s+" <br></p>";
     }
     private boolean isEmbed(){
